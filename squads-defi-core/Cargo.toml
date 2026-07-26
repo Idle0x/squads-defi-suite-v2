@@ -1,0 +1,31 @@
+[package]
+name = "squads-defi-core"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Shared core for Squads DeFi plugins on ZeroClaw"
+publish = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+base64 = "0.22"
+bs58 = "0.5"
+borsh = { version = "1.4", features = ["derive"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+waki = { version = "0.5.1", optional = true }
+sha2 = "0.10"
+chrono = "0.4"
+squads-multisig-program = { version = "2.0", optional = true }
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+waki = { version = "0.5.1", features = ["json"] }
+
+[dev-dependencies]
+
+[features]
+default = []
+squads-state = ["dep:squads-multisig-program"]

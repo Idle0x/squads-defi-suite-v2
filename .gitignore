@@ -1,0 +1,10 @@
+# Credentials - NEVER commit
+.env
+.env.*
+
+# Build output
+target/
+*.wasm
+
+# Config (if any)
+config.toml

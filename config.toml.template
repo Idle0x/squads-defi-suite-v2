@@ -1,0 +1,52 @@
+schema_version = 3
+locale = "en"
+
+[agent]
+name = "squads-defi-assistant"
+
+# ── LLM Provider ──────────────────────────────────────────
+# [providers.openrouter]
+# type = "openrouter"
+# api_key = "<YOUR_OPENROUTER_API_KEY>"
+# models = ["<YOUR_MODEL>"]
+
+# ── Telegram Channel ──────────────────────────────────────
+# [channels.telegram]
+# type = "telegram"
+# bot_token = "<YOUR_TELEGRAM_BOT_TOKEN>"
+
+# ── Plugins ───────────────────────────────────────────────
+[plugins]
+enabled = true
+auto_discover = true
+
+[[plugins.entries]]
+name = "jupiter-swap-propose"
+config.rpc_url = "https://api.mainnet-beta.solana.com"
+config.squads_vault = "<YOUR_SQUADS_VAULT_ADDRESS>"
+config.mint_allowlist = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v,Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+config.max_slippage_bps = "100"
+config.max_notional_usd = "10"
+config.per_day_cap_usd = "50"
+
+[[plugins.entries]]
+name = "vault-watch"
+config.rpc_url = "https://api.mainnet-beta.solana.com"
+config.squads_vault = "<YOUR_SQUADS_VAULT_ADDRESS>"
+
+[[plugins.entries]]
+name = "solana-pay-request"
+config.recipient = "<YOUR_SQUADS_VAULT_ADDRESS>"
+
+[[plugins.entries]]
+name = "token-risk-check"
+config.rpc_url = "https://api.mainnet-beta.solana.com"
+
+# ── Daily Vault Briefing (cron) ───────────────────────────
+# [cron.jobs.daily-briefing]
+# schedule = "0 8 * * *"
+# prompt = """
+# Read the vault briefing using vault-watch plugin.
+# If a proposal expires within 6 hours, notify with urgency.
+# If any health factor is below 1.1, escalate with an alert.
+# """

@@ -1,0 +1,105 @@
+name: Build & Verify
+
+on:
+  push:
+    branches: [main, master]
+    tags: ['v*']
+  pull_request:
+    branches: [main, master]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+
+      - name: Run native tests
+        run: cargo test --workspace
+
+      - name: Build WASM components
+        run: bash scripts/build.sh
+
+      - name: Verify manifests
+        run: bash scripts/verify.sh
+
+      - name: Package plugins
+        run: bash scripts/package.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: plugin-packages
+          path: dist/*.zip
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: wasm32-wasip2
+
+      - name: Build & package
+        run: |
+          bash scripts/build.sh
+          bash scripts/package.sh
+
+      - name: Build registry index
+        run: |
+          echo '{"version":1,"plugins":[]}' > registry.json
+          for zip in dist/*.zip; do
+            stem=$(basename "$zip" .zip)
+            # name is everything before the last version segment
+            # e.g. "jupiter-swap-propose-0.1.0" → name="jupiter-swap-propose" version="0.1.0"
+            name=$(echo "$stem" | sed 's/-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$//')
+            version=$(echo "$stem" | grep -oP '\d+\.\d+\.\d+$')
+            sha=$(sha256sum "$zip" | cut -d' ' -f1)
+            url="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/$(basename $zip)"
+            jq --arg n "$name" \
+               --arg v "$version" \
+               --arg s "$sha" \
+               --arg u "$url" \
+               '.plugins += [{"name": $n, "version": $v, "sha256": $s, "url": $u}]' \
+               registry.json > registry.tmp && mv registry.tmp registry.json
+          done
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip
+            registry.json
+          body: |
+            ## Squads DeFi Suite ${{ github.ref_name }}
+
+            ### Installation
+
+            ```bash
+            # From the community plugin list:
+            zeroclaw plugin install --registry <url> <plugin-name>
+
+            # Or build from source:
+            # See https://github.com/${{ github.repository }}#readme
+            ```
+
+            ### Packages
+
+            $(for zip in dist/*.zip; do
+              name=$(basename "$zip")
+              echo "- \`$name\`"
+            done)
+
+            ### Changes
+
+            See [CHANGELOG](./CHANGELOG.md) or the commit log for details.

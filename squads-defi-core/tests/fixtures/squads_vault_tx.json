@@ -1,0 +1,8 @@
+{
+  "address": "Tx11111111111111111111111111111111111111",
+  "vault_index": 0,
+  "transaction_message_base64": "AQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=",
+  "memo": "Jupiter swap",
+  "ephemeral_signers": 0,
+  "status": "pending"
+}

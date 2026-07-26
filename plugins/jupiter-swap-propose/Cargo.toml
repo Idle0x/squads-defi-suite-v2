@@ -1,0 +1,23 @@
+[package]
+name = "jupiter-swap-propose"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "ZeroClaw WIT plugin: Jupiter swap → guardrails → Squads proposal"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+squads-defi-core = { path = "../../squads-defi-core" }
+wit-bindgen = "0.46"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "1"
+borsh = { version = "1.4", features = ["derive"] }
+base64 = "0.22"
+
+[target.'cfg(target_family = "wasm")'.dependencies]
+waki = { version = "0.5.1", features = ["json"] }
+

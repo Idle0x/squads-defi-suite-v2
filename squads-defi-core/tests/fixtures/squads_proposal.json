@@ -1,0 +1,10 @@
+{
+  "address": "Proposal11111111111111111111111111111111111111",
+  "transaction_index": 0,
+  "description": "Jupiter swap: SOL \u2192 USDC, 1 SOL",
+  "status": "active",
+  "votes_for": 1,
+  "votes_against": 0,
+  "approvals_needed": 2,
+  "expires_at": 1753000000
+}

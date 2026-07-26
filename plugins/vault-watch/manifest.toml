@@ -1,0 +1,7 @@
+name = "vault-watch"
+version = "0.1.0"
+description = "Daily treasury briefings: pending proposals, balances, lending health"
+author = "ZeroClaw Labs"
+wasm_path = "vault_watch.wasm"
+capabilities = ["tool"]
+permissions = ["http_client", "config_read"]

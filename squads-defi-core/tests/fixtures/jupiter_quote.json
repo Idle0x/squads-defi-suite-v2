@@ -1,0 +1,22 @@
+{
+  "inputMint": "So11111111111111111111111111111111111112",
+  "outputMint": "EPjFWdd5AufqSSqeM2qNFTx3Lp5JgKmQqy3r4eJdE2k",
+  "inAmount": "1000000000",
+  "outAmount": "1847000000",
+  "otherAmountThreshold": "1830000000",
+  "slippageBps": 300,
+  "priceImpactPct": 0.15,
+  "price": 1.84,
+  "routePlan": [
+    {
+      "swapInfo": {
+        "ammKey": "JUP6LkbZbjSVPjAzYfPmznVhFRkZMLaGDnfTm15x4Pv",
+        "label": "Jupiter Aggregator",
+        "inputMint": "So11111111111111111111111111111111111112",
+        "outputMint": "EPjFWdd5AufqSSqeM2qNFTx3Lp5JgKmQqy3r4eJdE2k",
+        "inAmount": "1000000000",
+        "outAmount": "1847000000"
+      }
+    }
+  ]
+}
