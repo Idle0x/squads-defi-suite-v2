@@ -66,8 +66,8 @@ for plugin in "${PLUGINS[@]}"; do
     echo "  ❌ $name:  wasm_path is empty or missing"
     errors=$((errors+1))
   else
-    # Check the wasm file exists somewhere under target
-    found=$(find "$ROOT/target" -path "*/wasm32-wasip2/release/*" -name "$m_wasm" -type f 2>/dev/null | head -1)
+    # Check the wasm file exists somewhere under the plugin's own target
+    found=$(find "$ROOT/$plugin/target" -path "*/wasm32-wasip2/release/*" -name "$m_wasm" -type f 2>/dev/null | head -1)
     if [ -z "$found" ]; then
       echo "  ⚠️  $name:  wasm_path='$m_wasm' not yet built (run build.sh first)"
       warnings=$((warnings+1))

@@ -1,20 +1,7 @@
 [workspace]
 members = [
     "squads-defi-core",
-    "plugins/jupiter-swap-propose",
-    "plugins/vault-watch",
-    "plugins/solana-pay-request",
-    "plugins/token-risk-check",
 ]
 resolver = "2"
 
 [workspace.package]
-edition = "2021"
-license = "MIT"
-
-[profile.release]
-opt-level = "s"
-lto = true
-strip = true
-codegen-units = 1
-overflow-checks = true

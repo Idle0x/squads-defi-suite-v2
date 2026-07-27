@@ -22,7 +22,9 @@ for plugin in "${PLUGINS[@]}"; do
   name="$(basename "$plugin")"
   echo ""
   echo "--- Building $name ---"
-  cargo build --package "$name" --target wasm32-wasip2 --release
+  cd "$ROOT/$plugin"
+  cargo build --target wasm32-wasip2 --release
+  cd "$ROOT"
 done
 
 echo ""
@@ -34,7 +36,8 @@ all_ok=true
 for plugin in "${PLUGINS[@]}"; do
   name="$(basename "$plugin")"
   wasm_path=$(grep '^wasm_path' "$plugin/manifest.toml" | head -1 | cut -d'"' -f2)
-  found=$(find "$ROOT/target" -path "*/wasm32-wasip2/release/*" -name "$wasm_path" -type f 2>/dev/null | head -1)
+  # Look in the plugin's own target directory (standalone workspace)
+  found=$(find "$ROOT/$plugin/target" -path "*/wasm32-wasip2/release/*" -name "$wasm_path" -type f 2>/dev/null | head -1)
   if [ -n "$found" ]; then
     size=$(stat --format=%s "$found" 2>/dev/null || stat -f%z "$found" 2>/dev/null)
     echo "  ✅ $name  → $wasm_path  ($(numfmt --to=iec "$size" 2>/dev/null || echo "${size}B"))"

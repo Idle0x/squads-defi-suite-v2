@@ -27,7 +27,7 @@ pub mod swap;
 #[cfg(target_family = "wasm")]
 mod component {
     wit_bindgen::generate!({
-        path: "../../wit/v0",
+        path: "wit/v0",
         world: "tool-plugin",
         features: ["plugins-wit-v0"],
     });

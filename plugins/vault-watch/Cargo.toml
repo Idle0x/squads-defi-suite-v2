@@ -10,7 +10,7 @@ publish = false
 crate-type = ["cdylib", "rlib"]
 
 [dependencies]
-squads-defi-core = { path = "../../squads-defi-core" }
+squads-defi-core = { version = "0.1.1", features = ["squads-state"] }
 wit-bindgen = "0.46"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
@@ -24,3 +24,4 @@ squads-state = ["squads-defi-core/squads-state"]
 [target.'cfg(target_family = "wasm")'.dependencies]
 waki = { version = "0.5.1", features = ["json"] }
 
+[workspace]

@@ -1,13 +1,13 @@
 [package]
 name = "squads-defi-core"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 license = "MIT"
 description = "Shared core for Squads DeFi plugins on ZeroClaw"
 publish = true
 
 [lib]
-crate-type = ["cdylib", "rlib"]
+crate-type = ["rlib"]
 
 [dependencies]
 base64 = "0.22"
