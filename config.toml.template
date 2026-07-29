@@ -1,48 +1,75 @@
-schema_version = 3
-locale = "en"
+# Squads DeFi Suite — ZeroClaw Plugin Configuration
+# Copy relevant sections into ~/.zeroclaw/config.toml
+# or apply via: zeroclaw config set <key> <value>
 
-[agent]
-name = "squads-defi-assistant"
-
-# ── LLM Provider ──────────────────────────────────────────
-# [providers.openrouter]
-# type = "openrouter"
-# api_key = "<YOUR_OPENROUTER_API_KEY>"
-# models = ["<YOUR_MODEL>"]
-
-# ── Telegram Channel ──────────────────────────────────────
-# [channels.telegram]
-# type = "telegram"
-# bot_token = "<YOUR_TELEGRAM_BOT_TOKEN>"
-
-# ── Plugins ───────────────────────────────────────────────
+# ── 1. Enable plugins ──────────────────────────────────────────────────
 [plugins]
 enabled = true
 auto_discover = true
 
-[[plugins.entries]]
-name = "jupiter-swap-propose"
-config.rpc_url = "https://api.mainnet-beta.solana.com"
-config.squads_vault = "<YOUR_SQUADS_VAULT_ADDRESS>"
-config.mint_allowlist = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v,Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
-config.max_slippage_bps = "100"
-config.max_notional_usd = "10"
-config.per_day_cap_usd = "50"
+# ── 2. Plugin execution limits (optional, defaults shown) ───────────────
+[plugins.limits]
+call_fuel = 1000000000
+max_memory_mb = 256
+max_table_elements = 100000
+max_instances = 64
 
-[[plugins.entries]]
-name = "vault-watch"
-config.rpc_url = "https://api.mainnet-beta.solana.com"
-config.squads_vault = "<YOUR_SQUADS_VAULT_ADDRESS>"
+# ── 3. Plugin signature policy (optional) ───────────────────────────────
+[plugins.security]
+signature_mode = "disabled"       # "strict" for production with signed packages
+# trusted_publisher_keys = ["ed25519:..."]  # Required in strict mode
 
-[[plugins.entries]]
-name = "solana-pay-request"
-config.recipient = "<YOUR_SQUADS_VAULT_ADDRESS>"
+# ── 4. Plugin configurations ──────────────────────────────────────────
+# Each plugin has its own [plugins.entries.<name>.config] section.
+# Values are injected via __config — the LLM cannot see or spoof them.
+# ------------------------------------------------------------------------
 
-[[plugins.entries]]
-name = "token-risk-check"
-config.rpc_url = "https://api.mainnet-beta.solana.com"
+# 4a. Jupiter Swap Propose — guarded swap → Squads proposal
+[plugins.entries.jupiter-swap-propose.config]
+rpc_url = "https://api.mainnet-beta.solana.com"
+squads_vault = "<YOUR_SQUADS_VAULT_ADDRESS>"
+mint_allowlist = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v,Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"
+max_slippage_bps = "100"
+max_notional_usd = "10"
+per_day_cap_usd = "50"
+jupiter_url = "https://quote-api.jup.ag/v6"
+proposal_expiry_hours = "24"
+transaction_index = "0"
+# Optional:
+# creator = "<CREATOR_PUBKEY>"        # Defaults to squads_vault.
+#                                     # IMPORTANT: Must be the MULTISIG CREATE-KEY
+#                                     # (the authority that created the Squads multisig).
+#                                     # If this differs from the vault's actual
+#                                     # create-key, PDA derivations will be wrong
+#                                     # and proposal building will fail.
+# squads_program_id = "SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf"
 
-# ── Daily Vault Briefing (cron) ───────────────────────────
+# 4b. Vault Watch — daily treasury briefings
+[plugins.entries.vault-watch.config]
+rpc_url = "https://api.mainnet-beta.solana.com"
+squads_vault = "<YOUR_SQUADS_VAULT_ADDRESS>"
+# Optional:
+# squads_program_id = "SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf"
+
+# 4c. Token Risk Check — analyze SPL token risk factors
+[plugins.entries.token-risk-check.config]
+rpc_url = "https://api.mainnet-beta.solana.com"
+
+# 4d. Solana Pay Request — build Solana Pay URLs
+[plugins.entries.solana-pay-request.config]
+recipient = "<YOUR_RECIPIENT_ADDRESS>"
+
+# ── 5. Cost tracking (optional, for budget management) ─────────────────
+# [cost]
+# daily_budget = "1.00"
+# monthly_budget = "20.00"
+#
+# [cost.rates.providers.models.openai]
+# "gpt-4o" = { input = 2.50, output = 10.00 }
+# [cost.rates.providers.models.gemini]
+# "gemini-2.0-flash" = { input = 0.10, output = 0.40 }
+
+# ── 6. Daily vault briefing cron (uncomment to enable) ──────────────────
 # [cron.jobs.daily-briefing]
 # schedule = "0 8 * * *"
 # prompt = """

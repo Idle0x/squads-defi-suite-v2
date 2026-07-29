@@ -23,6 +23,7 @@ mod component {
     };
     use serde::Deserialize;
     use std::collections::HashMap;
+    use std::time::Instant;
 
     #[derive(Deserialize)]
     struct ExecuteArgs {
@@ -96,6 +97,15 @@ mod component {
             let parsed: ExecuteArgs = serde_json::from_str(&args)
                 .map_err(|e| format!("invalid arguments: {e}"))?;
 
+            let start = Instant::now();
+
+            let start_attrs = serde_json::json!({
+                "has_amount": parsed.amount.is_some(),
+                "has_token": parsed.spl_token.is_some(),
+                "has_label": parsed.label.is_some(),
+            });
+            emit(Some(start), PluginAction::Start, PluginOutcome::Success, "building Solana Pay URL", Some(start_attrs));
+
             // Recipient MUST come from __config — NEVER from the LLM.
             // The host strips any model-supplied __config and injects
             // the real operator-configured recipient. This is the
@@ -113,13 +123,8 @@ mod component {
             let pay_url = pay::build_pay_url(
                 &recipient, amount_opt, token_opt, label_opt, msg_opt, memo_opt,
             ).map_err(|e| {
-                log_record(LogLevel::Warn, &PluginEvent {
-                    function_name: "solana_pay_request::execute".into(),
-                    action: PluginAction::Fail,
-                    outcome: Some(PluginOutcome::Failure),
-                    duration_ms: None, attrs: None,
-                    message: e.clone(),
-                });
+                let err_attrs = serde_json::json!({ "error": &e });
+                emit(Some(start), PluginAction::Fail, PluginOutcome::Failure, "failed to build pay URL", Some(err_attrs));
                 e
             })?;
 
@@ -142,12 +147,41 @@ mod component {
                 "qr_data": pay_url,
             }).to_string();
 
+            let success_attrs = serde_json::json!({
+                "recipient": &short_recipient,
+                "amount": amount_opt.unwrap_or("any"),
+                "has_token": token_opt.is_some(),
+            });
+            emit(Some(start), PluginAction::Complete, PluginOutcome::Success, "Solana Pay URL built", Some(success_attrs));
+
             Ok(ToolResult {
                 success: true,
                 output,
                 error: None,
             })
         }
+    }
+
+    /// Log a plugin event with optional timing and structured attributes.
+    fn emit(
+        start_time: Option<Instant>,
+        action: PluginAction,
+        outcome: PluginOutcome,
+        message: &str,
+        attrs: Option<serde_json::Value>,
+    ) {
+        let duration_ms = start_time.map(|t| t.elapsed().as_millis() as u64);
+        log_record(
+            LogLevel::Info,
+            &PluginEvent {
+                function_name: "solana_pay_request::execute".to_string(),
+                action,
+                outcome: Some(outcome),
+                duration_ms,
+                attrs: attrs.map(|v| v.to_string()),
+                message: message.to_string(),
+            },
+        );
     }
 
     export!(SolanaPayRequest);

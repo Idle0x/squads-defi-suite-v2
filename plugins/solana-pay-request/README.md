@@ -155,5 +155,5 @@ The plugin declares `["config_read"]` in its [manifest](manifest.toml):
 
 - [ARCHITECTURE.md](../../ARCHITECTURE.md) — WIT contracts, `__config` jail, capsule tiers
 - [GETTING_STARTED.md](../../GETTING_STARTED.md) — End-to-end setup walkthrough
-- [config-template.toml](../../config-template.toml) — Complete config reference
+- [config.toml.template](../../config.toml.template) — Complete config reference
 - [Solana Pay spec](https://github.com/solana-labs/solana-pay/blob/master/SPEC.md) — Official URL format

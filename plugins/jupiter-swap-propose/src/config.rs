@@ -39,10 +39,24 @@ impl PluginConfig {
             .cloned()
             .ok_or_else(|| ConfigError::MissingKey("rpc_url".to_string()))?;
 
+        if !rpc_url.starts_with("https://") {
+            return Err(ConfigError::InvalidValue {
+                key: "rpc_url".to_string(),
+                reason: format!("must use HTTPS, got '{}'", rpc_url),
+            });
+        }
+
         let jupiter_url = section
             .get("jupiter_url")
             .cloned()
             .unwrap_or_else(|| "https://quote-api.jup.ag/v6".to_string());
+
+        if !jupiter_url.starts_with("https://") {
+            return Err(ConfigError::InvalidValue {
+                key: "jupiter_url".to_string(),
+                reason: format!("must use HTTPS, got '{}'", jupiter_url),
+            });
+        }
 
         let squads_vault_str = section
             .get("squads_vault")

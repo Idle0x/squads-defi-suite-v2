@@ -10,7 +10,6 @@ fn low_risk_input() -> TokenRiskInput {
         has_transfer_hook: false,
         has_transfer_fee: false,
         has_permanent_delegate: false,
-        lp_exists: true,
     }
 }
 

@@ -1410,7 +1410,7 @@ dependencies = [
  "borsh 1.8.0",
  "serde",
  "serde_json",
- "squads-defi-core 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "squads-defi-core",
  "thiserror",
  "waki",
  "wit-bindgen 0.46.0",
@@ -2171,7 +2171,7 @@ version = "0.1.0"
 dependencies = [
  "serde",
  "serde_json",
- "squads-defi-core 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "squads-defi-core",
  "wit-bindgen 0.46.0",
 ]
 
@@ -2618,24 +2618,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "squads-defi-core"
-version = "0.1.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f61c10af8359d7b3d5d8342b4cb0b5f4970aae6232d148f04ab9f1f4c9846051"
-dependencies = [
- "base64 0.22.1",
- "borsh 1.8.0",
- "bs58 0.5.1",
- "chrono",
- "serde",
- "serde_json",
- "sha2 0.10.9",
- "squads-multisig-program",
- "thiserror",
- "waki",
-]
-
-[[package]]
 name = "squads-multisig-program"
 version = "2.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2763,7 +2745,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "squads-defi-core 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "squads-defi-core",
  "waki",
  "wit-bindgen 0.46.0",
 ]
@@ -2868,7 +2850,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
- "squads-defi-core 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "squads-defi-core",
  "waki",
  "wit-bindgen 0.46.0",
 ]

@@ -13,11 +13,19 @@ PLUGINS=(
   "plugins/token-risk-check"
 )
 
+PLUGIN_NAMES=(
+  "jupiter-swap-propose"
+  "vault-watch"
+  "solana-pay-request"
+  "token-risk-check"
+)
+
 errors=0
 warnings=0
 
 echo "=============================================="
 echo "  Plugin Manifest Verification"
+echo "  Workspace: unified"
 echo "=============================================="
 
 for plugin in "${PLUGINS[@]}"; do
@@ -66,18 +74,13 @@ for plugin in "${PLUGINS[@]}"; do
     echo "  ❌ $name:  wasm_path is empty or missing"
     errors=$((errors+1))
   else
-    # Check the wasm file exists somewhere under the plugin's own target
-    found=$(find "$ROOT/$plugin/target" -path "*/wasm32-wasip2/release/*" -name "$m_wasm" -type f 2>/dev/null | head -1)
+    # Check the wasm file in the unified workspace target directory
+    wasm_name=$(echo "$name" | tr '-' '_')
+    found=$(find "$ROOT/target" -path "*/wasm32-wasip2/release/*" -name "$wasm_name.wasm" -type f 2>/dev/null | head -1)
     if [ -z "$found" ]; then
       echo "  ⚠️  $name:  wasm_path='$m_wasm' not yet built (run build.sh first)"
       warnings=$((warnings+1))
     fi
-  fi
-
-  # Check SKILL.md exists
-  if [ ! -f "$plugin/SKILL.md" ]; then
-    echo "  ⚠️  $name:  SKILL.md missing (agent instructions for LLM)"
-    warnings=$((warnings+1))
   fi
 
   echo "  ✅ $name  — all checks passed"

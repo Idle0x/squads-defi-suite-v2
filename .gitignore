@@ -5,6 +5,9 @@
 # Build output
 target/
 *.wasm
+*.cwasm
+dist/
+registry.json
 
 # Config (if any)
 config.toml
