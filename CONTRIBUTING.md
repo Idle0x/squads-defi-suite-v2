@@ -7,10 +7,9 @@ squads-defi-suite/
 ├── plugins/<name>/          # ZeroClaw WASM plugin crate
 │   ├── Cargo.toml
 │   ├── manifest.toml        # Plugin metadata for ZeroClaw registry
-│   ├── SKILL.md             # Agent instruction file
 │   ├── README.md            # Plugin documentation
 │   └── src/                 # Rust source
-├── squads-defi-core/        # Shared core crate (published on crates.io)
+├── squads-defi-core/        # Shared core crate (path dependency, local workspace member)
 ├── wit/v0/                  # WIT interface definitions
 ├── scripts/                 # Build and verification scripts
 ├── tests/                   # Integration tests
@@ -26,14 +25,14 @@ squads-defi-suite/
 
 ## Adding a new plugin
 
-1. Create a new crate under `plugins/<name>/` with the standard structure.
+1. Create a new crate under `plugins/<name>/` with the standard structure. Use `squads-defi-core = { path = "../../squads-defi-core" }` in `Cargo.toml` to depend on the local core crate — do NOT reference the crates.io version, since the workspace resolves locally.
 2. Add the WIT bindings generation in the component module (see existing plugins for reference).
 3. Implement the `tool-plugin` world: `PluginInfo` and `Tool` traits.
 4. Create `manifest.toml` with the plugin name, version, wasm_path, capabilities, and permissions.
 5. Add the plugin to the workspace `members` array in `Cargo.toml`.
 6. Add the plugin to the `PLUGINS` array in `scripts/build.sh` and `scripts/package.sh`.
 7. Write tests in `plugins/<name>/tests/`.
-8. Create `SKILL.md` with agent-facing instructions.
+8. Ensure the plugin's `description()` and `parameters_schema()` provide clear instructions for the LLM — these are the agent's primary interface to the tool. Complex workflow guidance belongs in `README.md`.
 9. Update `README.md` with configuration and usage documentation.
 
 ## Submitting changes

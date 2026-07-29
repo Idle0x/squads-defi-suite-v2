@@ -33,15 +33,14 @@ pub struct PendingProposal {
 
 /// Fetch pending proposals for a given multisig vault authority.
 ///
+/// `squads_program_id` is read from config — no longer hardcoded.
 /// Routes to the WASM manual-parsing path or the native `squads-state` path.
 pub fn fetch_pending_proposals(
     rpc_url: &str,
     vault: &Pubkey,
+    squads_program_id: &Pubkey,
 ) -> Result<Vec<PendingProposal>, String> {
-    let squads_program_id = Pubkey::from_str("SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf")
-        .map_err(|e| format!("invalid Squads program ID: {e}"))?;
-
-    let (multisig_pda, _multisig_bump) = derive_multisig_pda(vault, &squads_program_id);
+    let (multisig_pda, _multisig_bump) = derive_multisig_pda(vault, squads_program_id);
 
     #[cfg(feature = "squads-state")]
     {

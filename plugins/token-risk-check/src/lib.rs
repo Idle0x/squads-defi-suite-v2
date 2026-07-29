@@ -25,6 +25,7 @@ mod component {
     };
     use serde::Deserialize;
     use std::collections::HashMap;
+    use std::time::Instant;
 
     #[derive(Deserialize)]
     struct ExecuteArgs {
@@ -77,6 +78,18 @@ mod component {
                 .cloned()
                 .ok_or_else(|| "missing `rpc_url` in config".to_string())?;
 
+            // HTTPS validation (D2)
+            if !rpc_url.starts_with("https://") {
+                return Err("rpc_url must use HTTPS".to_string());
+            }
+
+            let start = Instant::now();
+
+            let start_attrs = serde_json::json!({
+                "mint_address": &parsed.mint_address,
+            });
+            emit(Some(start), PluginAction::Start, PluginOutcome::Success, "starting risk check", Some(start_attrs));
+
             let mint_pk = squads_defi_core::Pubkey::from_str(&parsed.mint_address)
                 .map_err(|e| format!("invalid mint address: {e}"))?;
 
@@ -84,7 +97,8 @@ mod component {
             let mint_data = match fetch_mint_account(&rpc_url, &mint_pk.to_string()) {
                 Ok(data) => data,
                 Err(e) => {
-                    emit(PluginAction::Fail, PluginOutcome::Failure, &format!("mint query failed: {e}"));
+                    let err_attrs = serde_json::json!({ "error": format!("mint query: {e}") });
+                    emit(Some(start), PluginAction::Fail, PluginOutcome::Failure, "mint query failed", Some(err_attrs));
                     return Ok(ToolResult {
                         success: false,
                         output: String::new(),
@@ -94,13 +108,21 @@ mod component {
             };
 
             let risk = token::assess_risk_from_mint_data(&mint_data, &mint_pk);
+            let risk_level = token::assess_risk(&risk);
             let summary = token::format_risk_summary(
                 &parsed.mint_address,
                 None,
                 &risk,
             );
 
-            emit(PluginAction::Complete, PluginOutcome::Success, "risk check completed");
+            let success_attrs = serde_json::json!({
+                "mint_address": &parsed.mint_address,
+                "risk_level": risk_level.as_str(),
+                "has_mint_authority": risk.mint_authority.is_some(),
+                "has_freeze_authority": risk.freeze_authority.is_some(),
+                "is_token22": risk.is_token22,
+            });
+            emit(Some(start), PluginAction::Complete, PluginOutcome::Success, "risk check completed", Some(success_attrs));
 
             Ok(ToolResult {
                 success: true,
@@ -157,15 +179,23 @@ mod component {
         Ok(data)
     }
 
-    fn emit(action: PluginAction, outcome: PluginOutcome, message: &str) {
+    /// Log a plugin event with optional timing and structured attributes.
+    fn emit(
+        start_time: Option<Instant>,
+        action: PluginAction,
+        outcome: PluginOutcome,
+        message: &str,
+        attrs: Option<serde_json::Value>,
+    ) {
+        let duration_ms = start_time.map(|t| t.elapsed().as_millis() as u64);
         log_record(
             LogLevel::Info,
             &PluginEvent {
                 function_name: "token_risk_check::execute".to_string(),
                 action,
                 outcome: Some(outcome),
-                duration_ms: None,
-                attrs: None,
+                duration_ms,
+                attrs: attrs.map(|v| v.to_string()),
                 message: message.to_string(),
             },
         );

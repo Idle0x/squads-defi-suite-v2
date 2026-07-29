@@ -77,7 +77,7 @@ zeroclaw config set plugins.entries.jupiter-swap-propose.config.creator YOUR_AUT
 zeroclaw config set plugins.entries.jupiter-swap-propose.config.mint_allowlist EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 ```
 
-See [config-template.toml](config-template.toml) for a complete reference with all optional keys.
+See [config.toml.template](config.toml.template) for a complete reference with all optional keys.
 
 ### 5. Restart and verify
 
@@ -151,7 +151,7 @@ squads-defi-suite/
 ├── wit/v0/ # Reference WIT files (each plugin has its own copy)
 ├── ARCHITECTURE.md # Full architecture documentation
 ├── GETTING_STARTED.md # Detailed setup walkthrough
-├── config-template.toml # Complete config reference with all keys
+├── config.toml.template # Complete config reference with all keys
 └── README.md # This file
 ```
 
@@ -201,7 +201,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md#dependency-model) for the rationale.
 |----------|---------------|
 | [`GETTING_STARTED.md`](GETTING_STARTED.md) | End-to-end walkthrough: ZeroClaw source build → plugin install → agent config → first message |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | WIT contracts, `__config` jail design, permission model, capsule tiers, dependency rationale |
-| [`config-template.toml`](config-template.toml) | Complete config template with every plugin key documented |
+| [`config.toml.template`](config.toml.template) | Complete config template with every plugin key documented |
 | [`plugins/jupiter-swap-propose/README.md`](plugins/jupiter-swap-propose/README.md) | Swap plugin: guardrails, parameters, output format, security |
 | [`plugins/vault-watch/README.md`](plugins/vault-watch/README.md) | Vault plugin: on-chain data sources, briefing format, cron scheduling |
 | [`plugins/solana-pay-request/README.md`](plugins/solana-pay-request/README.md) | Payment plugin: URL format, config-locked recipient, anti-redirect |

@@ -60,7 +60,7 @@ cargo build --target "$TARGET" --release 2>&1
 # 4. Install into ZeroClaw
 WASM_FILE=$(find target/wasm32-wasip2/release -name "*.wasm" -type f | head -1)
 PLUGIN_DIR=$(mktemp -d)
-cp manifest.toml "$PLUGIN_DIR/"
+cp zeroclaw-plugin.toml "$PLUGIN_DIR/"
 cp "$WASM_FILE" "$PLUGIN_DIR/"
 
 echo "==> Installing into ZeroClaw..."

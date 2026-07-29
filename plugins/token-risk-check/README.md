@@ -179,6 +179,6 @@ The plugin declares `["http_client", "config_read"]` in its [manifest](manifest.
 
 - [ARCHITECTURE.md](../../ARCHITECTURE.md) — WIT contracts, `__config` jail, capsule tiers
 - [GETTING_STARTED.md](../../GETTING_STARTED.md) — End-to-end setup walkthrough
-- [config-template.toml](../../config-template.toml) — Complete config reference
+- [config.toml.template](../../config.toml.template) — Complete config reference
 - [SPL Token Program](https://github.com/solana-labs/solana-program-library/tree/master/token/program) — Mint account layout specification
 - [Token-2022 Extensions](https://spl.solana.com/token-2022/extensions) — Extension types and TLV encoding

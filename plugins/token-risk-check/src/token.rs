@@ -35,7 +35,6 @@ pub struct TokenRiskInput {
     pub has_transfer_hook: bool,
     pub has_transfer_fee: bool,
     pub has_permanent_delegate: bool,
-    pub lp_exists: bool,
 }
 
 /// Parse mint account data returned from `getAccountInfo` and assess risk.
@@ -66,7 +65,6 @@ pub fn assess_risk_from_mint_data(
         has_transfer_hook: false,
         has_transfer_fee: false,
         has_permanent_delegate: false,
-        lp_exists: false,
     };
 
     if mint_data.len() < 42 {
@@ -189,7 +187,6 @@ pub fn assess_risk(input: &TokenRiskInput) -> RiskLevel {
     if input.has_transfer_hook { risk_score += 2; }
     if input.has_permanent_delegate { risk_score += 3; }
     if input.has_transfer_fee { risk_score += 1; }
-    if !input.lp_exists { risk_score += 1; }
 
     match risk_score {
         0 => RiskLevel::Low,

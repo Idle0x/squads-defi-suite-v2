@@ -3,7 +3,7 @@
 //! Uses manual ATA derivation and real RPC calls for WASM builds.
 //! Removes hardcoded fake prices and synthetic data.
 
-use sha2::{Digest, Sha256};
+use squads_defi_core::squads::derive_ata_pda;
 use squads_defi_core::Pubkey;
 use serde::{Deserialize, Serialize};
 
@@ -93,7 +93,7 @@ pub fn fetch_balances(
         let ata_prog = Pubkey::from_str(ASSOCIATED_TOKEN_PROGRAM_ID)
             .map_err(|e| format!("invalid ATA program ID: {e}"))?;
 
-        let ata_pubkey = derive_ata_pda(vault, &mint_pubkey, &token_prog, &ata_prog);
+        let (ata_pubkey, _bump) = derive_ata_pda(vault, &mint_pubkey, &token_prog, &ata_prog);
 
         match rpc_get_token_account_balance(rpc_url, &ata_pubkey.to_string()) {
             Ok(token_amount) if token_amount > 0 => {
@@ -113,52 +113,6 @@ pub fn fetch_balances(
     }
 
     Ok(balances)
-}
-
-/// Derive the ATA PDA using Solana's exact algorithm.
-/// Seeds: [wallet, token_program, mint], Program: ATA program ID.
-/// Matches `squads-defi-core::squads::derive_ata_pda` byte-for-byte.
-fn derive_ata_pda(
-    wallet: &Pubkey,
-    mint: &Pubkey,
-    token_program: &Pubkey,
-    ata_program: &Pubkey,
-) -> Pubkey {
-    for bump in (0..=255).rev() {
-        let mut hasher = sha2::Sha256::new();
-        hasher.update(b"ProgramDerivedAddress");
-        hasher.update(ata_program.to_bytes());
-        hasher.update(wallet.to_bytes());
-        hasher.update(token_program.to_bytes());
-        hasher.update(mint.to_bytes());
-        hasher.update(&[bump]);
-
-        let hash = hasher.finalize();
-        let mut pubkey_bytes = [0u8; 32];
-        pubkey_bytes.copy_from_slice(&hash[..32]);
-
-        // Check if off-curve using the same heuristic as squads.rs
-        if !is_on_curve(&pubkey_bytes) {
-            return Pubkey::new(pubkey_bytes);
-        }
-    }
-    // Fallback: bump 255
-    let mut hasher = sha2::Sha256::new();
-    hasher.update(b"ProgramDerivedAddress");
-    hasher.update(ata_program.to_bytes());
-    hasher.update(wallet.to_bytes());
-    hasher.update(token_program.to_bytes());
-    hasher.update(mint.to_bytes());
-    hasher.update(&[255u8]);
-    let hash = hasher.finalize();
-    let mut pubkey_bytes = [0u8; 32];
-    pubkey_bytes.copy_from_slice(&hash[..32]);
-    Pubkey::new(pubkey_bytes)
-}
-
-/// On-curve heuristic: ed25519 curve points have the high bit of the last byte unset.
-fn is_on_curve(bytes: &[u8; 32]) -> bool {
-    bytes[31] & 0x80 == 0
 }
 
 /// Symbol for known mints.

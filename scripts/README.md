@@ -19,7 +19,7 @@ Compiles every plugin to a `wasm32-wasip2` WebAssembly component.
 ./scripts/build.sh
 ```
 
-Each plugin is built independently from its own directory — no workspace coupling. The output `.wasm` files are placed alongside each plugin's `manifest.toml` for direct installation with `zeroclaw plugin install`.
+Each plugin is built as part of the unified workspace from the project root. The output `.wasm` files are placed in the root `target/wasm32-wasip2/release/` directory. Packaging scripts copy them alongside each plugin's `manifest.toml` for `zeroclaw plugin install`.
 
 ### Prerequisites
 
