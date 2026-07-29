@@ -13,7 +13,8 @@ use squads_defi_core::Pubkey;
 #[test]
 fn test_fetch_pending_proposals_returns_data_or_empty() {
     let vault = Pubkey::new([1u8; 32]);
-    let result = proposals::fetch_pending_proposals("https://api.devnet.solana.com", &vault);
+    let squads_program_id = Pubkey::from_str("SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf").unwrap();
+    let result = proposals::fetch_pending_proposals("https://api.devnet.solana.com", &vault, &squads_program_id);
     assert!(result.is_ok());
     // When RPC is unavailable, returns devnet sample data (non-empty).
     // When RPC is available and no proposals exist, returns empty.

@@ -133,4 +133,4 @@ The plugin declares `["http_client", "config_read"]` in its [manifest](manifest.
 
 - [ARCHITECTURE.md](../../ARCHITECTURE.md) — WIT contracts, `__config` jail, capsule tiers
 - [GETTING_STARTED.md](../../GETTING_STARTED.md) — End-to-end setup walkthrough
-- [config-template.toml](../../config-template.toml) — Complete config reference
+- [config.toml.template](../../config.toml.template) — Complete config reference

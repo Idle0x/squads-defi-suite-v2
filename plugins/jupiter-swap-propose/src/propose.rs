@@ -13,6 +13,15 @@ use squads_defi_core::{Blockhash, Pubkey, SquadsProposal, Transaction};
 use crate::config::{PluginConfig, SwapGuardrails};
 use crate::error::PluginError;
 
+/// Truncate a base58 pubkey for display (first 8 chars + …).
+fn short_mint(s: &str) -> String {
+    if s.len() > 8 {
+        format!("{}…", &s[..8])
+    } else {
+        s.to_string()
+    }
+}
+
 /// The result of building a swap proposal.
 pub struct ProposalResult {
     /// The unsigned Squads v4 proposal (ready for review/signing).
@@ -96,10 +105,11 @@ pub fn build_real_swap_proposal(
     cfg: &PluginConfig,
     guardrails: &SwapGuardrails,
     daily_spent_usd: f64,
-    usd_per_unit: Option<f64>,
+    usd_per_unit: f64,
     blockhash: &Blockhash,
     authority_pubkey: &Pubkey,
     squads_program_id: &Pubkey,
+    transaction_index: u64,
 ) -> Result<(String, String), PluginError> {
     use squads_defi_core::jupiter::JupiterClient;
     use squads_defi_core::Transaction;
@@ -107,24 +117,11 @@ pub fn build_real_swap_proposal(
     // ── 1. Validate all guardrails ────────────────────────────────
     let client = JupiterClient::new(&cfg.jupiter_url, "");
 
-    // Use the host-provided USD price per unit, or skip notional check.
-    // The host (AI agent) has access to Jupiter's price API and MUST
-    // provide this for the daily cap and notional guardrails to work.
-    let per_unit = match usd_per_unit {
-        Some(p) => p,
-        None => {
-            // If the host configured a daily cap or max notional but didn't provide
-            // USD prices, the guardrail cannot function. Fail hard — never skip silently.
-            if guardrails.per_day_cap_usd > 0 || cfg.max_notional_usd > 0 {
-                return Err(PluginError::Guardrail(
-                    "usd_per_unit is required for notional guardrails. \
-                     The host must provide the USD price per base unit of the input token.".into()
-                ));
-            }
-            0.0 // No USD caps configured — safe to skip pricing
-        }
-    };
-
+    // Use the host-provided USD price per unit.
+    // The plugin fetches this from Jupiter's price API internally.
+    // It is always available — notional and daily cap guardrails
+    // can always be enforced.
+    let per_unit = usd_per_unit;
     client.validate_quote(
         quote,
         guardrails.max_slippage_bps,
@@ -162,18 +159,20 @@ pub fn build_real_swap_proposal(
         )),
         blockhash,
         &cfg.squads_vault,
-        cfg.transaction_index,
+        transaction_index,
     ).map_err(|e| PluginError::Swap(format!("meta-tx build: {e}")))?;
 
     // ── 5. Human-readable summary (≤200 tokens) ───────────────────
+    let input_short = short_mint(&quote.input_mint);
+    let output_short = short_mint(&quote.output_mint);
     let summary = format!(
         "Swap Proposal Ready\n\
          Input: {} {} → Output: {} {}\n\
          Slippage: {} bps | Price Impact: {:.2}%\n\
          Route: {} hops | Expires: +{}h\n\
          Open Squads app to review and sign.",
-        quote.in_amount, quote.input_mint,
-        quote.out_amount, quote.output_mint,
+        quote.in_amount, input_short,
+        quote.out_amount, output_short,
         quote.slippage_bps, quote.price_impact_pct,
         quote.route_plan.len(), cfg.proposal_expiry_hours
     );
@@ -384,7 +383,8 @@ mod tests {
 
         let result = build_real_swap_proposal(
             &quote, &swap_instructions, &cfg, &guardrails,
-            0.0, Some(0.001), &blockhash, &authority, &squads_program_id,
+            0.0, 0.001, &blockhash, &authority, &squads_program_id,
+            0,
         );
 
         assert!(result.is_ok(), "full chain must succeed: {:?}", result.err());
@@ -441,7 +441,8 @@ mod tests {
 
         let result = build_real_swap_proposal(
             &bad_quote, &swap_instructions, &cfg, &guardrails,
-            0.0, Some(0.001), &blockhash, &authority, &squads_program_id,
+            0.0, 0.001, &blockhash, &authority, &squads_program_id,
+            0,
         );
 
         assert!(result.is_err(), "guardrail denial must stop the chain");

@@ -48,6 +48,10 @@ pub use squads::{
     VaultTransactionCreateArgs, ProposalCreateArgs,
     // NEW: meta-transaction builder
     build_meta_transaction,
+    // NEW: parse on-chain transaction index from multisig account
+    parse_multisig_transaction_index,
+    // NEW: ATA PDA derivation
+    derive_ata_pda,
 };
 
 // Jupiter Quote API

@@ -23,12 +23,13 @@ echo "=============================================="
 
 for plugin in "${PLUGINS[@]}"; do
   name="$(basename "$plugin")"
-  m_ver=$(grep '^version\b' "$plugin/manifest.toml" | head -1 | sed 's/.*= *"\(.*\)"/\1/')
-  m_wasm=$(grep '^wasm_path\b' "$plugin/manifest.toml" | head -1 | sed 's/.*= *"\(.*\)"/\1/')
+  m_ver=$(grep '^version\b' "$plugin/zeroclaw-plugin.toml" | head -1 | sed 's/.*= *"\(.*\)"/\1/')
+  m_wasm=$(grep '^wasm_path\b' "$plugin/zeroclaw-plugin.toml" | head -1 | sed 's/.*= *"\(.*\)"/\1/')
   archive="${DIST}/${name}-${m_ver}.zip"
 
-  # Resolve the compiled wasm binary in the plugin's own workspace target
-  wasm_file=$(find "$ROOT/$plugin/target" -path "*/wasm32-wasip2/release/*" -name "$m_wasm" -type f 2>/dev/null | head -1)
+  # Resolve the compiled wasm binary in the unified workspace target directory
+  wasm_name=$(echo "$name" | tr '-' '_')
+  wasm_file=$(find "$ROOT/target" -path "*/wasm32-wasip2/release/*" -name "${wasm_name}.wasm" -type f 2>/dev/null | head -1)
   if [ -z "$wasm_file" ]; then
     echo "  ❌ $name:  wasm binary '$m_wasm' not found. Run build.sh first."
     exit 1
@@ -37,7 +38,7 @@ for plugin in "${PLUGINS[@]}"; do
   # Build staging dir with flat structure
   staging=$(mktemp -d)
   cp "$wasm_file"                  "$staging/$m_wasm"
-  cp "$plugin/manifest.toml"       "$staging/"
+  cp "$plugin/zeroclaw-plugin.toml"       "$staging/"
   cp "$plugin/README.md"           "$staging/"
   [ -f "$plugin/SKILL.md" ] && cp "$plugin/SKILL.md" "$staging/"
 
@@ -49,6 +50,9 @@ for plugin in "${PLUGINS[@]}"; do
 
   echo "  ✅ $name $m_ver → ${archive##*/}"
   echo "     size: $(numfmt --to=iec "$size" 2>/dev/null || echo "${size}B")   sha256: ${sha:0:16}…"
+
+  # Sign the package if a signing key is available (G3)
+  bash "$ROOT/scripts/sign.sh" "$archive"
 
   rm -rf "$staging"
 done

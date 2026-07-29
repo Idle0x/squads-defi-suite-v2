@@ -204,5 +204,5 @@ See [ARCHITECTURE.md](../../ARCHITECTURE.md#permissions-model) for details.
 
 - [ARCHITECTURE.md](../../ARCHITECTURE.md) — WIT contracts, `__config` jail, permissions model
 - [GETTING_STARTED.md](../../GETTING_STARTED.md) — End-to-end setup walkthrough
-- [config-template.toml](../../config-template.toml) — Complete config reference
+- [config.toml.template](../../config.toml.template) — Complete config reference
 - [`squads-defi-core`](https://crates.io/crates/squads-defi-core) — Published shared core crate

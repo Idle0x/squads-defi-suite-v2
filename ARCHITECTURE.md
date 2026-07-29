@@ -263,7 +263,7 @@ squads-defi-core = "0.1"
 | Topic | See also |
 |-------|----------|
 | End-to-end setup walkthrough | [`GETTING_STARTED.md`](GETTING_STARTED.md) |
-| Plugin configuration reference | [`config-template.toml`](config-template.toml) |
+| Plugin configuration reference | [`config.toml.template`](config.toml.template) |
 | Published core crate | [`squads-defi-core/README.md`](squads-defi-core/README.md) |
 | ZeroClaw plugin documentation | [ZeroClaw docs — Writing a plugin](https://github.com/zeroclaw-labs/zeroclaw/tree/main/docs/plugins) |
 | WIT contract specification | [wit/v0/](wit/v0/) (vendored from ZeroClaw) |

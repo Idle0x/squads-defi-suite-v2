@@ -32,6 +32,15 @@ jobs:
       - name: Package plugins
         run: bash scripts/package.sh
 
+      - name: Validate WASM components
+        run: |
+          cargo install wasm-tools --locked
+          for wasm in target/wasm32-wasip2/release/*.wasm; do
+            echo "Validating $(basename $wasm)..."
+            wasm-tools validate --features component-model "$wasm"
+            echo "  ✅ $(basename $wasm) — valid component model"
+          done
+
       - uses: actions/upload-artifact@v4
         with:
           name: plugin-packages
@@ -55,22 +64,39 @@ jobs:
           bash scripts/build.sh
           bash scripts/package.sh
 
+      - name: Sign packages
+        env:
+          PLUGIN_SIGNING_KEY: ${{ secrets.PLUGIN_SIGNING_KEY }}
+        run: |
+          for zip in dist/*.zip; do
+            bash scripts/sign.sh "$zip"
+          done
+
       - name: Build registry index
         run: |
           echo '{"version":1,"plugins":[]}' > registry.json
           for zip in dist/*.zip; do
             stem=$(basename "$zip" .zip)
-            # name is everything before the last version segment
-            # e.g. "jupiter-swap-propose-0.1.0" → name="jupiter-swap-propose" version="0.1.0"
             name=$(echo "$stem" | sed 's/-[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$//')
             version=$(echo "$stem" | grep -oP '\d+\.\d+\.\d+$')
             sha=$(sha256sum "$zip" | cut -d' ' -f1)
             url="https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/$(basename $zip)"
+            # Read description and author from manifest
+            plugin_dir="plugins/$(echo $name | tr '_' '-')"
+            if [ -f "$plugin_dir/manifest.toml" ]; then
+              description=$(grep '^description\b' "$plugin_dir/manifest.toml" | head -1 | sed 's/.*= *"\(.*\)"/\1/')
+              author=$(grep '^author\b' "$plugin_dir/manifest.toml" | head -1 | sed 's/.*= *"\(.*\)"/\1/')
+            else
+              description=""
+              author=""
+            fi
             jq --arg n "$name" \
                --arg v "$version" \
                --arg s "$sha" \
                --arg u "$url" \
-               '.plugins += [{"name": $n, "version": $v, "sha256": $s, "url": $u}]' \
+               --arg d "$description" \
+               --arg a "$author" \
+               '.plugins += [{"name": $n, "version": $v, "sha256": $s, "url": $u, "description": $d, "author": $a, "capabilities": ["tool"]}]' \
                registry.json > registry.tmp && mv registry.tmp registry.json
           done
 
@@ -79,6 +105,7 @@ jobs:
         with:
           files: |
             dist/*.zip
+            dist/*.sig
             registry.json
           body: |
             ## Squads DeFi Suite ${{ github.ref_name }}

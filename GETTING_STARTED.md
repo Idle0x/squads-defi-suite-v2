@@ -187,7 +187,7 @@ zeroclaw config set plugins.entries.jupiter-swap-propose.config.per_day_cap_usd 
 zeroclaw config set plugins.entries.jupiter-swap-propose.config.proposal_expiry_hours 72
 ```
 
-See [config-template.toml](config-template.toml) for every available key with descriptions and defaults.
+See [config.toml.template](config.toml.template) for every available key with descriptions and defaults.
 
 ---
 
@@ -243,6 +243,25 @@ Bot: Swap Proposal Created!
  Open Squads app to review and sign:
  → https://app.squads.so/proposal/...
 ```
+
+---
+
+## Cost tracking
+
+ZeroClaw can track API costs and enforce daily/monthly budgets. This is optional but recommended for the $2 test budget.
+
+```bash
+# Set a daily budget of $1
+zeroclaw config set cost.daily_budget "1.00"
+
+# Set prices for the model provider you're using (example: OpenAI GPT-4o)
+zeroclaw config set cost.rates.providers.models.openai '{"gpt-4o": {"input": 2.50, "output": 10.00}}'
+
+# View cost history
+zeroclaw cost
+```
+
+The cost ledger is append-only and attributed to the originating agent. Budget enforcement blocks calls once the cap is reached. The ledger resets at midnight UTC for daily budgets and on the 1st of the month for monthly budgets.
 
 ---
 

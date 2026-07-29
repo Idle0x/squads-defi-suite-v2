@@ -112,6 +112,52 @@ fn find_pda(seeds: &[&[u8]], program_id: &Pubkey) -> (Pubkey, u8) {
     (Pubkey::new(pubkey_bytes), 255)
 }
 
+/// Parse the current `transaction_index` from a Squads v4 Multisig account's
+/// raw Anchor-encoded account data.
+///
+/// Layout (Anchor):
+///   [0..8]   discriminator: sha256("global:Multisig")[0..8]
+///   [8..40]  config_authority: Pubkey (32)
+///   [40..48] time_lock: i64 (8)
+///   [48..50] threshold: u16 (2)
+///   [50..54] members_len: u32 LE (4)
+///   [54..54+N*66] members: N × Member { key: Pubkey(32), permissions: Pubkey(32), weight: u16(2) }
+///   [54+N*66..54+N*66+8] transaction_index: u64 LE
+pub fn parse_multisig_transaction_index(data: &[u8]) -> Result<u64, String> {
+    let expected_disc = anchor_discriminator("Multisig");
+    if data.len() < 54 {
+        return Err(format!(
+            "Multisig account too short: {} bytes (min 54)",
+            data.len()
+        ));
+    }
+    if data[0..8] != expected_disc {
+        return Err("wrong discriminator for Multisig account".to_string());
+    }
+    let members_len = u32::from_le_bytes([data[50], data[51], data[52], data[53]]) as usize;
+    let tx_index_offset = 54 + members_len * 66;
+    let expected_min = tx_index_offset + 8;
+    if data.len() < expected_min {
+        return Err(format!(
+            "Multisig account truncated: {} bytes, expected >= {} for {} members",
+            data.len(),
+            expected_min,
+            members_len
+        ));
+    }
+    let tx_index = u64::from_le_bytes([
+        data[tx_index_offset],
+        data[tx_index_offset + 1],
+        data[tx_index_offset + 2],
+        data[tx_index_offset + 3],
+        data[tx_index_offset + 4],
+        data[tx_index_offset + 5],
+        data[tx_index_offset + 6],
+        data[tx_index_offset + 7],
+    ]);
+    Ok(tx_index)
+}
+
 /// Heuristic check: returns true if the point IS on the ed25519 curve.
 /// Uses full ed25519 compressed point decompression via the `ed25519` module.
 fn is_on_curve(bytes: &[u8; 32]) -> bool {
@@ -129,7 +175,7 @@ fn is_on_curve(bytes: &[u8; 32]) -> bool {
 /// Pubkey::find_program_address with seeds [wallet, token_program, mint].
 /// The algorithm here produces the correct PDA in the vast majority of
 /// cases because the ATA program uses find_program_address internally.
-fn derive_ata_pda(
+pub fn derive_ata_pda(
     wallet: &Pubkey,
     mint: &Pubkey,
     token_program: &Pubkey,
@@ -328,7 +374,7 @@ pub fn build_meta_transaction(
 
     // ── 2. ProposalCreate instruction (4 accounts) ────────────────
     let proposal_args = ProposalCreateArgs {
-        transaction_index: 0,
+        transaction_index,
         draft: false,
     };
 
