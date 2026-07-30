@@ -51,15 +51,23 @@ trap 'rm -rf "$BUILD_DIR"' EXIT
 echo "==> Cloning $REPO..."
 git clone --depth 1 "$REPO" "$BUILD_DIR/squads-defi-suite" 2>/dev/null
 
-cd "$BUILD_DIR/squads-defi-suite/plugins/$PLUGIN"
+cd "$BUILD_DIR/squads-defi-suite"
 
 # 3. Build the WASM component
-echo "==> Building WASM component..."
-cargo build --target "$TARGET" --release 2>&1
+echo "==> Building WASM component... (this may take a few minutes the first time)"
+cargo build -p "$PLUGIN" --target "$TARGET" --release 2>&1
 
 # 4. Install into ZeroClaw
-WASM_FILE=$(find target/wasm32-wasip2/release -name "*.wasm" -type f | head -1)
+WASM_FILE=$(find "$BUILD_DIR/squads-defi-suite/target/$TARGET/release" -name "*.wasm" -type f | head -1)
 PLUGIN_DIR=$(mktemp -d)
+
+# The WASM crate produces a file named with underscores (e.g. solana_pay_request.wasm)
+PLUGIN_WASM="${PLUGIN//-/_}.wasm"
+# If the found file doesn't match, look specifically for the plugin's WASM
+if [ "$(basename "$WASM_FILE")" != "$PLUGIN_WASM" ]; then
+  WASM_FILE="$BUILD_DIR/squads-defi-suite/target/$TARGET/release/$PLUGIN_WASM"
+fi
+
 cp manifest.toml "$PLUGIN_DIR/"
 cp "$WASM_FILE" "$PLUGIN_DIR/"
 

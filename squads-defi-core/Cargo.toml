@@ -1,6 +1,6 @@
 [package]
 name = "squads-defi-core"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2021"
 license = "MIT"
 description = "Shared core for Squads DeFi plugins on ZeroClaw"

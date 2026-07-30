@@ -2603,7 +2603,7 @@ dependencies = [
 
 [[package]]
 name = "squads-defi-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "base64 0.22.1",
  "borsh 1.8.0",
@@ -2849,7 +2849,6 @@ dependencies = [
  "base64 0.22.1",
  "serde",
  "serde_json",
- "sha2 0.10.9",
  "squads-defi-core",
  "waki",
  "wit-bindgen 0.46.0",
