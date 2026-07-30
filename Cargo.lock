@@ -418,9 +418,9 @@ checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
 
 [[package]]
 name = "base64"
-version = "0.22.1"
+version = "0.23.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
+checksum = "b25655df2c3cdd83c5e5b293b88acd880332b2ddadd7c30ac43144fdc0033da9"
 
 [[package]]
 name = "bincode"
@@ -2591,7 +2591,7 @@ dependencies = [
 name = "squads-defi-core"
 version = "0.1.2"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.0",
  "borsh 1.8.0",
  "bs58 0.5.1",
  "chrono",
@@ -2631,7 +2631,7 @@ checksum = "6bdef32e8150c2a081110b42772ffe7d7c9032b606bc226c8260fd97e0976601"
 name = "swap-propose"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.0",
  "borsh 1.8.0",
  "serde",
  "serde_json",
@@ -2741,7 +2741,7 @@ checksum = "1f3ccbac311fea05f86f61904b462b55fb3df8837a366dfc601a0161d0532f20"
 name = "token-risk-check"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.0",
  "serde",
  "serde_json",
  "sha2 0.10.9",
@@ -2846,7 +2846,7 @@ dependencies = [
 name = "vault-watch"
 version = "0.1.0"
 dependencies = [
- "base64 0.22.1",
+ "base64 0.23.0",
  "serde",
  "serde_json",
  "squads-defi-core",
