@@ -15,10 +15,10 @@ This document describes how the Squads DeFi Suite plugins work under the hood. I
 
 ## Plugin anatomy
 
-Every plugin in this suite follows the same structure. Using `jupiter-swap-propose` as an example:
+Every plugin in this suite follows the same structure. Using `swap-propose` as an example:
 
 ```
-plugins/jupiter-swap-propose/
+plugins/swap-propose/
 ├── Cargo.toml # [workspace] + deps (wit-bindgen, serde, squads-defi-core)
 ├── manifest.toml # name, version, wasm_path, capabilities[], permissions[]
 ├── wit/v0/ # Vendored WIT contract files (unmodified from ZeroClaw v0.8.3)
@@ -52,11 +52,11 @@ The shared core library, [`squads-defi-core`](https://crates.io/crates/squads-de
 This file tells ZeroClaw about the plugin at load time:
 
 ```toml
-name = "jupiter-swap-propose"
+name = "swap-propose"
 version = "0.1.0"
 description = "Build a guarded Jupiter swap proposal wrapped in a Squads v4 multisig proposal"
 author = "Squads DeFi Suite"
-wasm_path = "jupiter_swap_propose.wasm"
+wasm_path = "swap_propose.wasm"
 capabilities = ["tool"]
 permissions = ["http_client", "config_read"]
 ```
@@ -84,7 +84,7 @@ WIT (WebAssembly Interface Types) is the ABI between ZeroClaw and all plugins. T
 
 Every tool plugin implements this world. The host calls:
 
-1. **`name()`** — Returns the tool name (e.g., `"jupiter-swap-propose"`). Must match `manifest.toml` and the agent-facing name.
+1. **`name()`** — Returns the tool name (e.g., `"swap-propose"`). Must match `manifest.toml` and the agent-facing name.
 2. **`description()`** — Natural-language description the agent uses to decide when to call this tool.
 3. **`parameters()`** — JSON Schema object describing the arguments the LLM should supply. **Critically, this schema never declares `__config`** — see [The `__config` jail](#the-__config-jail).
 4. **`execute(args)`** — The main entry point. Receives JSON, returns `ToolResult { success: bool, output: string }`.
@@ -151,7 +151,7 @@ Permissions are declared in `manifest.toml` and enforced by the ZeroClaw runtime
 
 | Permission | What it grants | Used by |
 |-----------|---------------|---------|
-| `http_client` | Outbound HTTPS requests (TLS performed host-side) | `jupiter-swap-propose`, `vault-watch`, `token-risk-check` |
+| `http_client` | Outbound HTTPS requests (TLS performed host-side) | `swap-propose`, `vault-watch`, `token-risk-check` |
 | `config_read` | Access to the plugin's `__config` section | All plugins |
 
 Sockets and websockets are not available for plugins in ZeroClaw v0.8.x. All network I/O uses the `waki` crate, which wraps `wasi:http`.
@@ -166,7 +166,7 @@ waki = { version = "0.5.1", features = ["json"] }
 Host tests run with native Rust and do not compile the wasm-only dependencies:
 
 ```bash
-cargo test -p jupiter-swap-propose # pure Rust, no wasm required
+cargo test -p swap-propose # pure Rust, no wasm required
 ```
 
 ---
@@ -183,7 +183,7 @@ The [ZeroClaw Solana bounty](https://superteam.fun/earn/listing/zeroclaw) define
 - Output is informational only
 - Protocol: query public RPC endpoints
 
-### T1 — Transaction builder (solana-pay-request, jupiter-swap-propose)
+### T1 — Transaction builder (solana-pay-request, swap-propose)
 
 - Builds unsigned transactions only
 - Never holds private keys

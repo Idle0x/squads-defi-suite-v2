@@ -1,6 +1,6 @@
 //! Swap construction tests — TDD contracts for swap tx building.
 
-use jupiter_swap_propose::swap;
+use swap_propose::swap;
 use squads_defi_core::jupiter::Quote;
 use squads_defi_core::types::MessageHeader;
 use squads_defi_core::{Blockhash, Pubkey};

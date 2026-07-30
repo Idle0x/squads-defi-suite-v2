@@ -1,4 +1,4 @@
-//! Error types for the jupiter-swap-propose plugin.
+//! Error types for the swap-propose plugin.
 
 use thiserror::Error;
 

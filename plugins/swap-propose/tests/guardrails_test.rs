@@ -4,8 +4,8 @@
 //! Each test tries to bypass a guardrail via config manipulation or crafted input.
 //! ALL must pass when implementation is complete.
 
-use jupiter_swap_propose::config::{PluginConfig, SwapGuardrails};
-use jupiter_swap_propose::error::GuardrailError;
+use swap_propose::config::{PluginConfig, SwapGuardrails};
+use swap_propose::error::GuardrailError;
 use squads_defi_core::jupiter::Quote;
 use squads_defi_core::Pubkey;
 use std::collections::HashMap;

@@ -7,7 +7,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 PLUGIN_NAMES=(
-  "jupiter-swap-propose"
+  "swap-propose"
   "vault-watch"
   "solana-pay-request"
   "token-risk-check"

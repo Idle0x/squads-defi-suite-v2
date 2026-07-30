@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "squads-defi-core",
-    "plugins/jupiter-swap-propose",
+    "plugins/swap-propose",
     "plugins/vault-watch",
     "plugins/token-risk-check",
     "plugins/solana-pay-request",

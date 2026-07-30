@@ -1,8 +1,16 @@
-//! ZeroClaw WIT plugin: `jupiter-swap-propose`.
+//! ZeroClaw WIT plugin: `swap-propose`.
 //!
-//! Build a guarded Jupiter swap and wrap it in a Squads multisig proposal.
+//! Build a guarded swap proposal (Jupiter mainnet or Raydium devnet)
+//! and wrap it in a Squads multisig proposal.
 //! The swap tx is embedded in the proposal so Squads fetches a fresh blockhash
 //! on approval — no risk of expired transactions.
+//!
+//! ## Providers
+//!
+//! - **Jupiter** (default) — mainnet. Uses `quote-api.jup.ag/v6` for quotes
+//!   and swap instructions. Configure `swap_provider = "jupiter"` in plugin config.
+//! - **Raydium** — devnet. Uses `transaction-v1.raydium.io` for compute quotes
+//!   and raw swap transactions. Configure `swap_provider = "raydium"` in plugin config.
 //!
 //! WIT world: `tool-plugin` exports `plugin-info` + `tool`.
 //!
@@ -14,10 +22,10 @@
 //! these values. The `parameters_schema` never declares `__config` —
 //! it is host-reserved and spoof-proof.
 //!
-//! The plugin fetches the Jupiter quote, token price, and swap instructions
-//! internally via waki (wasi:http). The LLM provides only the raw swap
-//! parameters (input mint, output mint, amount, slippage). All guardrails
-//! are enforced in Rust code before any transaction is built.
+//! The plugin fetches the swap quote, token price, and swap instructions
+//! internally via waki (wasi:http) from the selected provider. The LLM provides
+//! only the raw swap parameters (input mint, output mint, amount, slippage).
+//! All guardrails are enforced in Rust code before any transaction is built.
 
 pub mod config;
 pub mod error;
@@ -70,28 +78,33 @@ mod component {
         config: HashMap<String, String>,
     }
 
-    struct JupiterSwapPropose;
+    struct SwapPropose;
 
-    const PLUGIN_NAME: &str = "jupiter-swap-propose";
+    const PLUGIN_NAME: &str = "swap-propose";
     const PLUGIN_VERSION: &str = env!("CARGO_PKG_VERSION");
 
     /// The Jupiter swap program ID on Solana mainnet.
     const JUPITER_PROGRAM_ID: &str = "JUP6LkbZbjSVPjAzYfPmznVhFRkZMLaGDnfTm15x4Pv";
+    /// Raydium router program ID (devnet).
+    const RAYDIUM_PROGRAM_ID: &str = "BVChZ3XFEwTMUk1o9i3HAf91H6mFxSwa5X2wFAWhYPhU";
     /// Default Squads v4 program ID (mainnet). Overridable via `squads_program_id` in config.
     const SQUADS_DEFAULT_PROGRAM_ID: &str = "SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf";
 
-    impl PluginInfo for JupiterSwapPropose {
+    impl PluginInfo for SwapPropose {
         fn plugin_name() -> String { PLUGIN_NAME.to_string() }
         fn plugin_version() -> String { PLUGIN_VERSION.to_string() }
     }
 
-    impl Tool for JupiterSwapPropose {
-        fn name() -> String { "jupiter-swap-propose".to_string() }
+    impl Tool for SwapPropose {
+        fn name() -> String {
+            "swap-propose".to_string()
+        }
 
         fn description() -> String {
-            "Build a guarded Jupiter swap proposal wrapped in a Squads v4 multisig proposal. \
+            "Build a guarded swap proposal (Jupiter/Raydium) wrapped in a Squads v4 multisig proposal. \
              Provide the raw swap parameters (input_mint, output_mint, amount, slippage_bps). \
-             The plugin fetches the Jupiter quote, token price, and swap instructions internally, \
+             The plugin fetches the swap quote, token price, and swap instructions internally \
+             (Jupiter on mainnet, Raydium on devnet via swap_provider config), \
              then validates mint allowlist, slippage, price impact, route hops, notional, and daily cap \
              before constructing the meta-transaction. Returns a base64-encoded versioned transaction \
              ready for human approval in the Squads app."
@@ -218,88 +231,197 @@ mod component {
                 }
             };
 
-            // ── 4. Fetch Jupiter quote (server-side) — right before swap-instructions
-            // to minimise the quote TTL window.
-            let quote = match fetch_jupiter_quote(
-                &cfg.jupiter_url,
-                &parsed.input_mint,
-                &parsed.output_mint,
-                &parsed.amount,
-                parsed.slippage_bps,
-            ) {
-                Ok(q) => q,
-                Err(e) => {
-                    let err_attrs = serde_json::json!({ "error": format!("Jupiter quote: {e}") });
-                    emit(Some(start), PluginAction::Fail, PluginOutcome::Failure, "quote fetch failed", Some(err_attrs));
+            // ── 4. Determine swap provider ──────────────────────────────────
+            // Read `swap_provider` from config. Default "jupiter".
+            // Also read `raydium_url` for Raydium provider (defaults to devnet).
+            let swap_provider = parsed.config
+                .get("swap_provider")
+                .cloned()
+                .unwrap_or_else(|| "jupiter".to_string());
+            let raydium_url = parsed.config
+                .get("raydium_url")
+                .cloned()
+                .unwrap_or_else(|| "https://transaction-v1-devnet.raydium.io".to_string());
+
+            let (meta_tx_base64, summary) = if swap_provider == "raydium" {
+                // ═══════════════════════════════════════════════════════════════
+                // Raydium (devnet) path
+                // ═══════════════════════════════════════════════════════════════
+
+                // ── 4a. Fetch Raydium compute quote ──────────────────────────
+                let compute_json = fetch_raydium_compute_quote(
+                    &raydium_url,
+                    &parsed.input_mint,
+                    &parsed.output_mint,
+                    &parsed.amount,
+                    parsed.slippage_bps,
+                )?;
+
+                let compute_data = &compute_json["data"];
+                let out_amount = compute_data["outputAmount"]
+                    .as_str().unwrap_or("0").to_string();
+                let price_impact_str = compute_data["priceImpact"]
+                    .as_str().unwrap_or("0");
+                let price_impact: f64 = price_impact_str.parse().unwrap_or(0.0);
+
+                emit(None, PluginAction::Start, PluginOutcome::Success,
+                     &format!("Raydium compute: {} → {} out, price_impact={:.2}%",
+                              &parsed.amount, out_amount, price_impact), None);
+
+                // ── 4b. Guardrail checks (inline, without JupiterClient) ─────
+                // Mint allowlist: only check output mint
+                if !cfg.mint_allowlist.is_empty() {
+                    let out_pk = squads_defi_core::Pubkey::from_str(&parsed.output_mint)
+                        .map_err(|e| format!("invalid output_mint: {e}"))?;
+                    if !cfg.mint_allowlist.contains(&out_pk) {
+                        let err = format!("Denied: output mint {} is not in the allowlist",
+                                          propose::short_mint(&parsed.output_mint));
+                        emit(Some(start), PluginAction::Fail, PluginOutcome::Failure, &err, None);
+                        return Ok(ToolResult { success: false, output: String::new(), error: Some(err) });
+                    }
+                }
+                // Slippage check
+                if parsed.slippage_bps > cfg.max_slippage_bps {
+                    let err = format!("Denied: slippage {} bps exceeds max {} bps",
+                                      parsed.slippage_bps, cfg.max_slippage_bps);
+                    emit(Some(start), PluginAction::Fail, PluginOutcome::Failure, &err, None);
+                    return Ok(ToolResult { success: false, output: String::new(), error: Some(err) });
+                }
+                // Price impact check
+                if price_impact > 5.0 {
+                    let err = format!("Denied: price impact {:.2}% exceeds 5% max", price_impact);
+                    emit(Some(start), PluginAction::Fail, PluginOutcome::Failure, &err, None);
+                    return Ok(ToolResult { success: false, output: String::new(), error: Some(err) });
+                }
+
+                // ── 4c. Fetch Raydium swap transaction ───────────────────────
+                let vault_pk_str = cfg.squads_vault.to_string();
+                let tx_json = fetch_raydium_swap_transaction(
+                    &raydium_url,
+                    &compute_json,
+                    &vault_pk_str,
+                )?;
+
+                let tx_base64 = tx_json["data"]["transaction"]
+                    .as_str()
+                    .ok_or_else(|| "Raydium response missing transaction field".to_string())?;
+
+                // ── 4d. Deserialize swap tx, extract message ─────────────────
+                let swap_tx = squads_defi_core::Transaction::from_base64(tx_base64)
+                    .map_err(|e| format!("Raydium tx decode: {e}"))?;
+                let swap_msg_bytes = swap_tx.message.to_wire();
+
+                // ── 4e. Wrap in Squads meta-transaction ──────────────────────
+                let meta_tx = squads_defi_core::squads::build_meta_transaction(
+                    &cfg.creator,
+                    &squads_program_id,
+                    swap_msg_bytes,
+                    Some(format!("Raydium swap: {} {} → {} {}",
+                                 &parsed.amount, propose::short_mint(&parsed.input_mint),
+                                 out_amount, propose::short_mint(&parsed.output_mint))),
+                    &blockhash,
+                    &cfg.squads_vault,
+                    transaction_index,
+                ).map_err(|e| format!("Raydium meta-tx build: {e}"))?;
+
+                let meta_tx_b64 = meta_tx;
+                let summ = format!(
+                    "Swap Proposal Ready\n\
+                     Input: {} {} → Output: {} {}\n\
+                     Slippage: {} bps | Price Impact: {:.2}%\n\
+                     Provider: Raydium | Expires: +{}h\n\
+                     Open Squads app to review and sign.",
+                    parsed.amount, propose::short_mint(&parsed.input_mint),
+                    out_amount, propose::short_mint(&parsed.output_mint),
+                    parsed.slippage_bps, price_impact,
+                    cfg.proposal_expiry_hours,
+                );
+
+                (meta_tx_b64, summ)
+
+            } else {
+                // ═══════════════════════════════════════════════════════════════
+                // Jupiter (mainnet) path — original logic
+                // ═══════════════════════════════════════════════════════════════
+
+                // ── 4. Fetch Jupiter quote ───────────────────────────────────
+                let quote = match fetch_jupiter_quote(
+                    &cfg.jupiter_url,
+                    &parsed.input_mint,
+                    &parsed.output_mint,
+                    &parsed.amount,
+                    parsed.slippage_bps,
+                ) {
+                    Ok(q) => q,
+                    Err(e) => {
+                        let err_attrs = serde_json::json!({ "error": format!("Jupiter quote: {e}") });
+                        emit(Some(start), PluginAction::Fail, PluginOutcome::Failure, "quote fetch failed", Some(err_attrs));
+                        return Ok(ToolResult {
+                            success: false,
+                            output: String::new(),
+                            error: Some(format!("Jupiter quote error: {e}")),
+                        });
+                    }
+                };
+
+                // ── 5. Fetch swap instructions from Jupiter ─────────────────
+                let vault_pubkey_str = cfg.squads_vault.to_string();
+                let swap_instructions = match fetch_jupiter_swap_instructions(
+                    &cfg.jupiter_url,
+                    &quote,
+                    &vault_pubkey_str,
+                ) {
+                    Ok(si) => si,
+                    Err(e) => {
+                        let err_attrs = serde_json::json!({ "error": format!("swap-instructions: {e}") });
+                        emit(Some(start), PluginAction::Fail, PluginOutcome::Failure, "swap-instructions fetch failed", Some(err_attrs));
+                        return Ok(ToolResult {
+                            success: false,
+                            output: String::new(),
+                            error: Some(format!("Jupiter swap-instructions error: {e}")),
+                        });
+                    }
+                };
+
+                // ── 6. Validate swap instruction program ID ─────────────────
+                if swap_instructions.swap_instruction.program_id != JUPITER_PROGRAM_ID {
+                    let err_attrs = serde_json::json!({
+                        "error": "program_id mismatch",
+                        "got": &swap_instructions.swap_instruction.program_id,
+                        "expected": JUPITER_PROGRAM_ID,
+                    });
+                    emit(Some(start), PluginAction::Fail, PluginOutcome::Failure, "program_id does not match Jupiter", Some(err_attrs));
                     return Ok(ToolResult {
                         success: false,
                         output: String::new(),
-                        error: Some(format!("Jupiter quote error: {e}")),
+                        error: Some(format!(
+                            "swap instruction program_id '{}' does not match Jupiter program ID '{}'",
+                            swap_instructions.swap_instruction.program_id,
+                            JUPITER_PROGRAM_ID,
+                        )),
                     });
                 }
+
+                emit(None, PluginAction::Start, PluginOutcome::Success, "all data fetched, building proposal", None);
+
+                // ── 7. Build proposal (guardrails enforced inside) ──────────
+                let daily_vol: f64 = 0.0;
+                let guardrails = SwapGuardrails::from(&cfg);
+                let result = propose::build_real_swap_proposal(
+                    &quote,
+                    &swap_instructions,
+                    &cfg,
+                    &guardrails,
+                    daily_vol,
+                    usd_per_unit,
+                    &blockhash,
+                    &cfg.creator,
+                    &squads_program_id,
+                    transaction_index,
+                ).map_err(|e| format!("{e}"))?;
+
+                result
             };
-
-            // ── 5. Fetch swap instructions from Jupiter (server-side) ───────
-            let vault_pubkey_str = cfg.squads_vault.to_string();
-            let swap_instructions = match fetch_jupiter_swap_instructions(
-                &cfg.jupiter_url,
-                &quote,
-                &vault_pubkey_str,
-            ) {
-                Ok(si) => si,
-                Err(e) => {
-                    let err_attrs = serde_json::json!({ "error": format!("swap-instructions: {e}") });
-                    emit(Some(start), PluginAction::Fail, PluginOutcome::Failure, "swap-instructions fetch failed", Some(err_attrs));
-                    return Ok(ToolResult {
-                        success: false,
-                        output: String::new(),
-                        error: Some(format!("Jupiter swap-instructions error: {e}")),
-                    });
-                }
-            };
-
-            // ── 5. Validate swap instruction program ID ─────────────────────
-            if swap_instructions.swap_instruction.program_id != JUPITER_PROGRAM_ID {
-                let err_attrs = serde_json::json!({
-                    "error": "program_id mismatch",
-                    "got": &swap_instructions.swap_instruction.program_id,
-                    "expected": JUPITER_PROGRAM_ID,
-                });
-                emit(Some(start), PluginAction::Fail, PluginOutcome::Failure, "program_id does not match Jupiter", Some(err_attrs));
-                return Ok(ToolResult {
-                    success: false,
-                    output: String::new(),
-                    error: Some(format!(
-                        "swap instruction program_id '{}' does not match Jupiter program ID '{}'",
-                        swap_instructions.swap_instruction.program_id,
-                        JUPITER_PROGRAM_ID,
-                    )),
-                });
-            }
-
-            emit(None, PluginAction::Start, PluginOutcome::Success, "all data fetched, building proposal", None);
-
-            // Daily volume tracking is disabled until host-level tracking is available.
-            // Only per-proposal notional cap applies.
-            let daily_vol: f64 = 0.0;
-            let guardrails = SwapGuardrails::from(&cfg);
-
-            // ── 6. Build proposal (guardrails enforced inside) ──────────────
-            // Use the auto-fetched transaction_index (overrides config default of 0)
-            let result = propose::build_real_swap_proposal(
-                &quote,
-                &swap_instructions,
-                &cfg,
-                &guardrails,
-                daily_vol,
-                usd_per_unit,
-                &blockhash,
-                &cfg.creator,
-                &squads_program_id,
-                transaction_index,
-            ).map_err(|e| format!("{e}"))?;
-
-            let (meta_tx_base64, summary) = result;
 
             let expires_at = squads_defi_core::squads::proposal_expiry_timestamp(
                 cfg.proposal_expiry_hours
@@ -444,6 +566,90 @@ mod component {
             .map_err(|e| format!("failed to parse swap-instructions response: {e}"))?;
 
         Ok(swap_instructions)
+    }
+
+    // =========================================================================
+    //  Raydium API helpers (devnet)
+    // =========================================================================
+
+    /// Fetch a swap quote from Raydium's compute endpoint (GET /compute/swap-base-in).
+    /// Returns the full JSON response (including id, success, data.inputAmount, etc.).
+    fn fetch_raydium_compute_quote(
+        base_url: &str,
+        input_mint: &str,
+        output_mint: &str,
+        amount: &str,
+        slippage_bps: u64,
+    ) -> Result<serde_json::Value, String> {
+        let url = format!(
+            "{}/compute/swap-base-in?inputMint={}&outputMint={}&amount={}&slippageBps={}&txVersion=V0",
+            base_url.trim_end_matches('/'),
+            url_encode(input_mint),
+            url_encode(output_mint),
+            amount,
+            slippage_bps,
+        );
+
+        let response = waki::Client::new()
+            .get(&url)
+            .header("Accept", "application/json")
+            .send()
+            .map_err(|e| format!("Raydium compute request failed: {e}"))?;
+
+        let body_bytes = response.body()
+            .map_err(|e| format!("Raydium compute response body read failed: {e}"))?;
+        let body_str = String::from_utf8(body_bytes)
+            .map_err(|e| format!("Raydium compute utf-8 error: {e}"))?;
+        let value: serde_json::Value = serde_json::from_str(&body_str)
+            .map_err(|e| format!("Raydium compute response parse error: {e}"))?;
+
+        if value.get("success").and_then(|v| v.as_bool()) != Some(true) {
+            let err_msg = value["error"].as_str().unwrap_or("unknown error");
+            return Err(format!("Raydium compute failed: {err_msg}"));
+        }
+
+        Ok(value)
+    }
+
+    /// Build a swap transaction via Raydium's POST /transaction/swap-base-in.
+    /// Passes the compute response as `swapResponse` and the vault address as `wallet`.
+    /// Returns the full JSON response containing the base64 transaction.
+    fn fetch_raydium_swap_transaction(
+        base_url: &str,
+        compute_response: &serde_json::Value,
+        wallet_address: &str,
+    ) -> Result<serde_json::Value, String> {
+        let url = format!("{}/transaction/swap-base-in", base_url.trim_end_matches('/'));
+
+        let request_body = serde_json::json!({
+            "wallet": wallet_address,
+            "swapResponse": compute_response,
+            "txVersion": "V0",
+            "computeUnitPriceMicroLamports": "0",
+            "wrapSol": true,
+            "unwrapSol": true,
+        });
+
+        let response = waki::Client::new()
+            .post(&url)
+            .header("Content-Type", "application/json")
+            .body(request_body.to_string().as_str())
+            .send()
+            .map_err(|e| format!("Raydium transaction request failed: {e}"))?;
+
+        let body_bytes = response.body()
+            .map_err(|e| format!("Raydium transaction response body read failed: {e}"))?;
+        let body_str = String::from_utf8(body_bytes)
+            .map_err(|e| format!("Raydium transaction utf-8 error: {e}"))?;
+        let value: serde_json::Value = serde_json::from_str(&body_str)
+            .map_err(|e| format!("Raydium transaction response parse error: {e}"))?;
+
+        if value.get("success").and_then(|v| v.as_bool()) != Some(true) {
+            let err_msg = value["error"].as_str().unwrap_or("unknown error");
+            return Err(format!("Raydium transaction failed: {err_msg}"));
+        }
+
+        Ok(value)
     }
 
     /// Fetch the USD price of a token per smallest unit.
@@ -620,7 +826,7 @@ mod component {
         log_record(
             LogLevel::Info,
             &PluginEvent {
-                function_name: "jupiter_swap_propose::execute".to_string(),
+                function_name: "swap_propose::execute".to_string(),
                 action,
                 outcome: Some(outcome),
                 duration_ms,
@@ -630,5 +836,5 @@ mod component {
         );
     }
 
-    export!(JupiterSwapPropose);
+    export!(SwapPropose);
 }

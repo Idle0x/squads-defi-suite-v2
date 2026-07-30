@@ -4,7 +4,7 @@ set -euo pipefail
 # Install all Squads DeFi Suite plugins at once
 REPO="https://raw.githubusercontent.com/Idle0x/squads-defi-suite-v2/main/scripts/install-plugin.sh"
 
-for plugin in token-risk-check solana-pay-request vault-watch jupiter-swap-propose; do
+for plugin in token-risk-check solana-pay-request vault-watch swap-propose; do
   echo ""
   echo "═══════════════════════════════════════════"
   echo "  Installing $plugin..."

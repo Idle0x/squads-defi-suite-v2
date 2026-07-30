@@ -25,7 +25,7 @@ signature_mode = "disabled"       # "strict" for production with signed packages
 # ------------------------------------------------------------------------
 
 # 4a. Jupiter Swap Propose — guarded swap → Squads proposal
-[plugins.entries.jupiter-swap-propose.config]
+[plugins.entries.swap-propose.config]
 rpc_url = "https://api.mainnet-beta.solana.com"
 squads_vault = "<YOUR_SQUADS_VAULT_ADDRESS>"
 mint_allowlist = "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v,Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB"

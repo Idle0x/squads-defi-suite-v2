@@ -1,9 +1,9 @@
 [package]
-name = "jupiter-swap-propose"
+name = "swap-propose"
 version = "0.1.0"
 edition = "2021"
 license = "MIT"
-description = "ZeroClaw WIT plugin: Jupiter swap → guardrails → Squads proposal"
+description = "ZeroClaw WIT plugin: Swap proposal (Jupiter/Raydium) → guardrails → Squads multisig proposal"
 publish = false
 
 [lib]

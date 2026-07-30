@@ -1,4 +1,4 @@
-//! Config parsing and guardrails struct for jupiter-swap-propose.
+//! Config parsing and guardrails struct for swap-propose.
 
 use squads_defi_core::Pubkey;
 use std::collections::HashMap;

@@ -7,14 +7,14 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 PLUGINS=(
-  "plugins/jupiter-swap-propose"
+  "plugins/swap-propose"
   "plugins/vault-watch"
   "plugins/solana-pay-request"
   "plugins/token-risk-check"
 )
 
 PLUGIN_NAMES=(
-  "jupiter-swap-propose"
+  "swap-propose"
   "vault-watch"
   "solana-pay-request"
   "token-risk-check"

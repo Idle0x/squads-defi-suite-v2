@@ -1,0 +1,7 @@
+name = "swap-propose"
+version = "0.1.0"
+description = "Build guarded swap proposals (Jupiter/Raydium) for Squads multisig"
+author = "ZeroClaw Labs"
+wasm_path = "swap_propose.wasm"
+capabilities = ["tool"]
+permissions = ["http_client", "config_read"]

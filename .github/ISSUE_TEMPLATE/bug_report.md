@@ -10,7 +10,7 @@ assignees: ''
 A clear and concise description of what the bug is.
 
 **Which plugin?**
-- [ ] jupiter-swap-propose
+- [ ] swap-propose
 - [ ] vault-watch
 - [ ] solana-pay-request
 - [ ] token-risk-check

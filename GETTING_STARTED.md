@@ -109,7 +109,7 @@ Each plugin is a self-contained WebAssembly component. Install them individually
 bash <(curl -sSf https://raw.githubusercontent.com/Idle0x/squads-defi-suite-v2/main/scripts/install-plugin.sh) token-risk-check
 bash <(curl -sSf https://raw.githubusercontent.com/Idle0x/squads-defi-suite-v2/main/scripts/install-plugin.sh) solana-pay-request
 bash <(curl -sSf https://raw.githubusercontent.com/Idle0x/squads-defi-suite-v2/main/scripts/install-plugin.sh) vault-watch
-bash <(curl -sSf https://raw.githubusercontent.com/Idle0x/squads-defi-suite-v2/main/scripts/install-plugin.sh) jupiter-swap-propose
+bash <(curl -sSf https://raw.githubusercontent.com/Idle0x/squads-defi-suite-v2/main/scripts/install-plugin.sh) swap-propose
 ```
 
 ### Option B: All at once
@@ -132,7 +132,7 @@ Then install each plugin manually:
 zeroclaw plugin install plugins/token-risk-check
 zeroclaw plugin install plugins/solana-pay-request
 zeroclaw plugin install plugins/vault-watch
-zeroclaw plugin install plugins/jupiter-swap-propose
+zeroclaw plugin install plugins/swap-propose
 ```
 
 ### Verify installation
@@ -145,7 +145,7 @@ Expected output:
 
 ```
 Installed plugins:
- jupiter-swap-propose v0.1.0 — Build a guarded Jupiter swap proposal...
+ swap-propose v0.1.0 — Build a guarded Jupiter swap proposal...
  vault-watch v0.1.0 — Daily treasury briefing...
  solana-pay-request v0.1.0 — Build Solana Pay URLs...
  token-risk-check v0.1.0 — Analyze SPL token risks...
@@ -170,21 +170,21 @@ zeroclaw config set plugins.entries.solana-pay-request.config.recipient YOUR_SOL
 zeroclaw config set plugins.entries.vault-watch.config.rpc_url https://api.mainnet-beta.solana.com
 zeroclaw config set plugins.entries.vault-watch.config.squads_vault YOUR_SQUADS_VAULT
 
-# jupiter-swap-propose
-zeroclaw config set plugins.entries.jupiter-swap-propose.config.rpc_url https://api.mainnet-beta.solana.com
-zeroclaw config set plugins.entries.jupiter-swap-propose.config.squads_vault YOUR_SQUADS_VAULT
-zeroclaw config set plugins.entries.jupiter-swap-propose.config.creator YOUR_AUTHORITY_PUBKEY
-zeroclaw config set plugins.entries.jupiter-swap-propose.config.mint_allowlist EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+# swap-propose
+zeroclaw config set plugins.entries.swap-propose.config.rpc_url https://api.mainnet-beta.solana.com
+zeroclaw config set plugins.entries.swap-propose.config.squads_vault YOUR_SQUADS_VAULT
+zeroclaw config set plugins.entries.swap-propose.config.creator YOUR_AUTHORITY_PUBKEY
+zeroclaw config set plugins.entries.swap-propose.config.mint_allowlist EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 ```
 
-### Extended configuration (jupiter-swap-propose guardrails)
+### Extended configuration (swap-propose guardrails)
 
 ```bash
 # Optional — sensible defaults are applied:
-zeroclaw config set plugins.entries.jupiter-swap-propose.config.max_slippage_bps 50
-zeroclaw config set plugins.entries.jupiter-swap-propose.config.max_notional_usd 1000
-zeroclaw config set plugins.entries.jupiter-swap-propose.config.per_day_cap_usd 5000
-zeroclaw config set plugins.entries.jupiter-swap-propose.config.proposal_expiry_hours 72
+zeroclaw config set plugins.entries.swap-propose.config.max_slippage_bps 50
+zeroclaw config set plugins.entries.swap-propose.config.max_notional_usd 1000
+zeroclaw config set plugins.entries.swap-propose.config.per_day_cap_usd 5000
+zeroclaw config set plugins.entries.swap-propose.config.proposal_expiry_hours 72
 ```
 
 See [config.toml.template](config.toml.template) for every available key with descriptions and defaults.
@@ -221,7 +221,7 @@ Open your Telegram chat with the agent and try these messages:
 | `"is EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v safe?"` | Returns mint authority, freeze authority, and risk level | `token-risk-check` |
 | `"request 0.1 SOL payment"` | Returns a `solana:` URL | `solana-pay-request` |
 | `"check my vault"` | Returns treasury briefing with balances and proposals | `vault-watch` |
-| `"swap 0.01 SOL for USDC"` | Returns an unsigned Squads proposal for review | `jupiter-swap-propose` |
+| `"swap 0.01 SOL for USDC"` | Returns an unsigned Squads proposal for review | `swap-propose` |
 
 ### Example dialog
 
@@ -284,7 +284,7 @@ The cost ledger is append-only and attributed to the originating agent. Budget e
 | Resource | What it covers |
 |----------|---------------|
 | [ARCHITECTURE.md](ARCHITECTURE.md) | WIT contracts, `__config` jail, permission model, capsule tiers |
-| [plugins/jupiter-swap-propose/README.md](plugins/jupiter-swap-propose/README.md) | Guardrails, parameters, output format |
+| [plugins/swap-propose/README.md](plugins/swap-propose/README.md) | Guardrails, parameters, output format |
 | [plugins/vault-watch/README.md](plugins/vault-watch/README.md) | On-chain data sources, briefing format |
 | [plugins/solana-pay-request/README.md](plugins/solana-pay-request/README.md) | URL format, anti-redirect design |
 | [plugins/token-risk-check/README.md](plugins/token-risk-check/README.md) | Mint data parsing, Token-2022 extensions |

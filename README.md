@@ -45,8 +45,8 @@ bash <(curl -sSf https://raw.githubusercontent.com/Idle0x/squads-defi-suite-v2/m
 # vault-watch — needs a vault address and RPC
 bash <(curl -sSf https://raw.githubusercontent.com/Idle0x/squads-defi-suite-v2/main/scripts/install-plugin.sh) vault-watch
 
-# jupiter-swap-propose — needs vault, creator, mint allowlist
-bash <(curl -sSf https://raw.githubusercontent.com/Idle0x/squads-defi-suite-v2/main/scripts/install-plugin.sh) jupiter-swap-propose
+# swap-propose — needs vault, creator, mint allowlist
+bash <(curl -sSf https://raw.githubusercontent.com/Idle0x/squads-defi-suite-v2/main/scripts/install-plugin.sh) swap-propose
 ```
 
 Or install all four at once:
@@ -70,11 +70,11 @@ zeroclaw config set plugins.entries.solana-pay-request.config.recipient YOUR_SOL
 zeroclaw config set plugins.entries.vault-watch.config.rpc_url https://api.mainnet-beta.solana.com
 zeroclaw config set plugins.entries.vault-watch.config.squads_vault YOUR_SQUADS_VAULT
 
-# jupiter-swap-propose
-zeroclaw config set plugins.entries.jupiter-swap-propose.config.rpc_url https://api.mainnet-beta.solana.com
-zeroclaw config set plugins.entries.jupiter-swap-propose.config.squads_vault YOUR_SQUADS_VAULT
-zeroclaw config set plugins.entries.jupiter-swap-propose.config.creator YOUR_AUTHORITY_PUBKEY
-zeroclaw config set plugins.entries.jupiter-swap-propose.config.mint_allowlist EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
+# swap-propose
+zeroclaw config set plugins.entries.swap-propose.config.rpc_url https://api.mainnet-beta.solana.com
+zeroclaw config set plugins.entries.swap-propose.config.squads_vault YOUR_SQUADS_VAULT
+zeroclaw config set plugins.entries.swap-propose.config.creator YOUR_AUTHORITY_PUBKEY
+zeroclaw config set plugins.entries.swap-propose.config.mint_allowlist EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 ```
 
 See [config.toml.template](config.toml.template) for a complete reference with all optional keys.
@@ -96,7 +96,7 @@ You should see all four plugins listed. Now message your agent:
 
 ```
 You: What tools do you have?
-Bot: token-risk-check, solana-pay-request, vault-watch, jupiter-swap-propose
+Bot: token-risk-check, solana-pay-request, vault-watch, swap-propose
 ```
 
 ---
@@ -105,7 +105,7 @@ Bot: token-risk-check, solana-pay-request, vault-watch, jupiter-swap-propose
 
 | Plugin | Tier | What it does | Try saying... | Permissions |
 |--------|------|-------------|---------------|-------------|
-| [`jupiter-swap-propose`](plugins/jupiter-swap-propose/) | T1 | Fetches a Jupiter quote, checks six configurable guardrails, returns an unsigned Squads v4 proposal | `"swap 10 SOL for USDC"` | `http_client`, `config_read` |
+| [`swap-propose`](plugins/swap-propose/) | T1 | Fetches a Jupiter quote, checks six configurable guardrails, returns an unsigned Squads v4 proposal | `"swap 10 SOL for USDC"` | `http_client`, `config_read` |
 | [`vault-watch`](plugins/vault-watch/) | T0 | Returns a treasury briefing: pending proposals, token balances, lending health for a Squads vault | `"check my vault"` | `http_client`, `config_read` |
 | [`solana-pay-request`](plugins/solana-pay-request/) | T1 | Builds a `solana:` payment URL with a config-locked recipient that the agent cannot redirect | `"request 25 USDC from Alice"` | `config_read` |
 | [`token-risk-check`](plugins/token-risk-check/) | T0 | Reads on-chain mint account data and returns risk flags: mint authority, freeze authority, Token-2022 extensions | `"is EPjFWdd5 safe?"` | `http_client`, `config_read` |
@@ -137,7 +137,7 @@ squads-defi-suite/
 │ ├── build.sh # Compiles all plugins to wasm32-wasip2
 │ └── package.sh # Produces distribution zips in dist/
 ├── plugins/
-│ ├── jupiter-swap-propose/ # Self-contained WASM plugin
+│ ├── swap-propose/ # Self-contained WASM plugin
 │ │ ├── Cargo.toml # Standalone workspace, deps from crates.io
 │ │ ├── manifest.toml # Plugin metadata and permissions
 │ │ ├── wit/v0/ # Vendored WIT contract (identical to ZeroClaw v0.8.3)
@@ -202,7 +202,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md#dependency-model) for the rationale.
 | [`GETTING_STARTED.md`](GETTING_STARTED.md) | End-to-end walkthrough: ZeroClaw source build → plugin install → agent config → first message |
 | [`ARCHITECTURE.md`](ARCHITECTURE.md) | WIT contracts, `__config` jail design, permission model, capsule tiers, dependency rationale |
 | [`config.toml.template`](config.toml.template) | Complete config template with every plugin key documented |
-| [`plugins/jupiter-swap-propose/README.md`](plugins/jupiter-swap-propose/README.md) | Swap plugin: guardrails, parameters, output format, security |
+| [`plugins/swap-propose/README.md`](plugins/swap-propose/README.md) | Swap plugin: guardrails, parameters, output format, security |
 | [`plugins/vault-watch/README.md`](plugins/vault-watch/README.md) | Vault plugin: on-chain data sources, briefing format, cron scheduling |
 | [`plugins/solana-pay-request/README.md`](plugins/solana-pay-request/README.md) | Payment plugin: URL format, config-locked recipient, anti-redirect |
 | [`plugins/token-risk-check/README.md`](plugins/token-risk-check/README.md) | Risk plugin: mint data parsing, Token-2022 extensions, risk scoring |

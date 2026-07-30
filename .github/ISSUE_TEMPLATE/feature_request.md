@@ -13,7 +13,7 @@ A clear and concise description of what the problem is. Ex. I'm always frustrate
 A clear and concise description of what you want to happen.
 
 **Which plugin does this affect?**
-- [ ] jupiter-swap-propose
+- [ ] swap-propose
 - [ ] vault-watch
 - [ ] solana-pay-request
 - [ ] token-risk-check

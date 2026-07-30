@@ -14,7 +14,7 @@ use crate::config::{PluginConfig, SwapGuardrails};
 use crate::error::PluginError;
 
 /// Truncate a base58 pubkey for display (first 8 chars + …).
-fn short_mint(s: &str) -> String {
+pub fn short_mint(s: &str) -> String {
     if s.len() > 8 {
         format!("{}…", &s[..8])
     } else {

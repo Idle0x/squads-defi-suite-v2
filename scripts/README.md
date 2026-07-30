@@ -35,8 +35,8 @@ plugins/solana-pay-request/solana_pay_request.wasm
 plugins/solana-pay-request/manifest.toml
 plugins/vault-watch/vault_watch.wasm
 plugins/vault-watch/manifest.toml
-plugins/jupiter-swap-propose/jupiter_swap_propose.wasm
-plugins/jupiter-swap-propose/manifest.toml
+plugins/swap-propose/swap_propose.wasm
+plugins/swap-propose/manifest.toml
 ```
 
 ---
@@ -75,7 +75,7 @@ bash <(curl -sSf https://raw.githubusercontent.com/Idle0x/squads-defi-suite-v2/m
 5. Runs `zeroclaw plugin install`
 6. Prints the required `zeroclaw config set` commands for that plugin
 
-**Supported plugins:** `token-risk-check`, `solana-pay-request`, `vault-watch`, `jupiter-swap-propose`
+**Supported plugins:** `token-risk-check`, `solana-pay-request`, `vault-watch`, `swap-propose`
 
 ---
 

@@ -1,4 +1,4 @@
-//! WASM artifact verification for `jupiter-swap-propose`.
+//! WASM artifact verification for `swap-propose`.
 //!
 //! Verifies the compiled `.wasm` file exists, has a reasonable size,
 //! and passes `wasm-tools validate` for the component model.
@@ -13,11 +13,11 @@
 
 use std::process::Command;
 
-/// Expected minimum size for a meaningful jupiter-swap-propose WASM component.
+/// Expected minimum size for a meaningful swap-propose WASM component.
 /// The actual artifact is ~640KB; this lower bound catches stub/empty outputs.
 const MIN_WASM_SIZE: u64 = 50_000;
 /// The WASM file name produced by the build (kebab → snake_case).
-const WASM_FILE: &str = "jupiter_swap_propose.wasm";
+const WASM_FILE: &str = "swap_propose.wasm";
 
 /// Locate the workspace root by climbing from CARGO_MANIFEST_DIR.
 fn workspace_root() -> std::path::PathBuf {
@@ -69,7 +69,7 @@ fn test_wasm_artifact_exists() {
     let wasm_path = find_wasm();
     assert!(
         wasm_path.is_some(),
-        "WASM artifact '{}' not found. Run `cargo build --target wasm32-wasip2 --release -p jupiter-swap-propose` first.",
+        "WASM artifact '{}' not found. Run `cargo build --target wasm32-wasip2 --release -p swap-propose` first.",
         WASM_FILE
     );
 }

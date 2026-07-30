@@ -34,7 +34,7 @@ ZeroClaw WASM plugins cannot use `solana-sdk` because it depends on native host 
 
 | Feature | What it enables | Used by |
 |---------|----------------|---------|
-| `squads-state` | Imports `squads-multisig-program` for Squads-specific types (proposal structs, vault PDAs) | `jupiter-swap-propose`, `vault-watch` |
+| `squads-state` | Imports `squads-multisig-program` for Squads-specific types (proposal structs, vault PDAs) | `swap-propose`, `vault-watch` |
 | `waki` | WASI HTTP client for `wasm32-wasip2` builds | Plugins that call RPC endpoints |
 
 Plugins select features based on what they need:

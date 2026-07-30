@@ -18,11 +18,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - **Unified Cargo workspace** — All 5 crates (core + 4 plugins) now share a single workspace. `cargo test --workspace` tests everything. Local `squads-defi-core` changes are immediately reflected via path dependencies. No more publish-to-test cycle. (B1)
 - **SKILL.md files removed** — Agent-facing instructions are now embedded in each plugin's `description()` and `parameters_schema()`. The SKILL.md files were never loaded by ZeroClaw (plugins declare `capabilities = ["tool"]`, not `["tool", "skill"]`). (F1, F2, F3)
-- **`squads_program_id` configurable** — Both `jupiter-swap-propose` and `vault-watch` now read the Squads program ID from config with a mainnet default. Removed hardcoded constant from function bodies. (N12)
+- **`squads_program_id` configurable** — Both `swap-propose` and `vault-watch` now read the Squads program ID from config with a mainnet default. Removed hardcoded constant from function bodies. (N12)
 
 ### Changed
 
-- **jupiter-swap-propose** — Plugin now accepts raw swap parameters (`input_mint`, `output_mint`, `amount`, `slippage_bps`) instead of pre-fetched JSON. Fetches quote, price, and swap instructions internally. All guardrails enforced in Rust.
+- **swap-propose** — Plugin now accepts raw swap parameters (`input_mint`, `output_mint`, `amount`, `slippage_bps`) instead of pre-fetched JSON. Fetches quote, price, and swap instructions internally. All guardrails enforced in Rust.
 - **vault-watch** — Added `refresh` parameter to `parameters_schema()`. Errors in RPC fetches now produce `warnings` field in JSON output instead of silently returning empty data. Configurable `squads_program_id`.
 - **token-risk-check** — Added timing, structured logging, and HTTPS URL validation.
 - **solana-pay-request** — Added timing and structured logging.
@@ -46,7 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **jupiter-swap-propose** — Jupiter swap quote → guardrail check → unsigned Squads v4 multisig proposal. Six Rust-enforced guardrails: mint allowlist, max slippage, max price impact, max route hops, max notional, daily cap.
+- **swap-propose** — Jupiter swap quote → guardrail check → unsigned Squads v4 multisig proposal. Six Rust-enforced guardrails: mint allowlist, max slippage, max price impact, max route hops, max notional, daily cap.
 - **vault-watch** — Read-only treasury briefing: pending/ready/executed proposals, token balances, lending health factors. Suitable for daily cron scheduling.
 - **solana-pay-request** — Build `solana:` payment URLs with config-enforced recipient address. SOL and SPL token support.
 - **token-risk-check** — On-chain SPL token risk analysis: mint authority, freeze authority, and Token-2022 extension detection. Returns low/medium/high classification.

@@ -11,7 +11,7 @@ DIST="${ROOT}/dist"
 mkdir -p "$DIST"
 
 PLUGINS=(
-  "plugins/jupiter-swap-propose"
+  "plugins/swap-propose"
   "plugins/vault-watch"
   "plugins/solana-pay-request"
   "plugins/token-risk-check"

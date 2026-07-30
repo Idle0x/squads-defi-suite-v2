@@ -9,7 +9,7 @@ set -euo pipefail
 #   solana-pay-request     Build Solana Pay URLs with config-locked recipient
 #   vault-watch            Daily Squads vault treasury briefing
 #   token-risk-check       Analyze SPL token mint risks
-#   jupiter-swap-propose   Build guarded Jupiter swap → Squads proposals
+#   swap-propose   Build guarded Jupiter swap → Squads proposals
 
 PLUGIN="${1:-}"
 REPO="https://github.com/Idle0x/squads-defi-suite-v2"
@@ -22,17 +22,17 @@ if [ -z "$PLUGIN" ]; then
   echo "  solana-pay-request     Build Solana Pay URLs"
   echo "  vault-watch            Daily Squads vault briefing"
   echo "  token-risk-check       Analyze SPL token risks"
-  echo "  jupiter-swap-propose   Build Jupiter swap → Squads proposals"
+  echo "  swap-propose   Build Jupiter swap → Squads proposals"
   exit 1
 fi
 
 # Validate plugin name
 case "$PLUGIN" in
-  solana-pay-request|vault-watch|token-risk-check|jupiter-swap-propose)
+  solana-pay-request|vault-watch|token-risk-check|swap-propose)
     ;;
   *)
     echo "Unknown plugin: $PLUGIN"
-    echo "Supported: solana-pay-request, vault-watch, token-risk-check, jupiter-swap-propose"
+    echo "Supported: solana-pay-request, vault-watch, token-risk-check, swap-propose"
     exit 1
     ;;
 esac
@@ -95,21 +95,21 @@ case "$PLUGIN" in
     echo "Required config:"
     echo "  zeroclaw config set plugins.entries.token-risk-check.config.rpc_url <RPC_URL>"
     ;;
-  jupiter-swap-propose)
+  swap-propose)
     echo "Required config:"
-    echo "  zeroclaw config set plugins.entries.jupiter-swap-propose.config.rpc_url <RPC_URL>"
-    echo "  zeroclaw config set plugins.entries.jupiter-swap-propose.config.squads_vault <SQUADS_VAULT_ADDRESS>"
-    echo "  zeroclaw config set plugins.entries.jupiter-swap-propose.config.creator <AUTHORITY_PUBKEY>"
-    echo "  zeroclaw config set plugins.entries.jupiter-swap-propose.config.mint_allowlist <ALLOWED_MINT>"
+    echo "  zeroclaw config set plugins.entries.swap-propose.config.rpc_url <RPC_URL>"
+    echo "  zeroclaw config set plugins.entries.swap-propose.config.squads_vault <SQUADS_VAULT_ADDRESS>"
+    echo "  zeroclaw config set plugins.entries.swap-propose.config.creator <AUTHORITY_PUBKEY>"
+    echo "  zeroclaw config set plugins.entries.swap-propose.config.mint_allowlist <ALLOWED_MINT>"
     echo ""
     echo "Optional config:"
-    echo "  zeroclaw config set plugins.entries.jupiter-swap-propose.config.max_slippage_bps 50"
-    echo "  zeroclaw config set plugins.entries.jupiter-swap-propose.config.max_notional_usd 1000"
-    echo "  zeroclaw config set plugins.entries.jupiter-swap-propose.config.per_day_cap_usd 5000"
-    echo "  zeroclaw config set plugins.entries.jupiter-swap-propose.config.proposal_expiry_hours 72"
-    echo "  zeroclaw config set plugins.entries.jupiter-swap-propose.config.jupiter_url https://api.jup.ag"
-    echo "  zeroclaw config set plugins.entries.jupiter-swap-propose.config.squads_program_id SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf"
-    echo "  zeroclaw config set plugins.entries.jupiter-swap-propose.config.transaction_index 0"
+    echo "  zeroclaw config set plugins.entries.swap-propose.config.max_slippage_bps 50"
+    echo "  zeroclaw config set plugins.entries.swap-propose.config.max_notional_usd 1000"
+    echo "  zeroclaw config set plugins.entries.swap-propose.config.per_day_cap_usd 5000"
+    echo "  zeroclaw config set plugins.entries.swap-propose.config.proposal_expiry_hours 72"
+    echo "  zeroclaw config set plugins.entries.swap-propose.config.jupiter_url https://api.jup.ag"
+    echo "  zeroclaw config set plugins.entries.swap-propose.config.squads_program_id SQDS4ep65T869zMMBKyuUq6aD6EgTu8psMjkvj52pCf"
+    echo "  zeroclaw config set plugins.entries.swap-propose.config.transaction_index 0"
     ;;
 esac
 
