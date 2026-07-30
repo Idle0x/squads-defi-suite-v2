@@ -68,7 +68,7 @@ if [ "$(basename "$WASM_FILE")" != "$PLUGIN_WASM" ]; then
   WASM_FILE="$BUILD_DIR/squads-defi-suite/target/$TARGET/release/$PLUGIN_WASM"
 fi
 
-cp manifest.toml "$PLUGIN_DIR/"
+cp "plugins/$PLUGIN/manifest.toml" "$PLUGIN_DIR/"
 cp "$WASM_FILE" "$PLUGIN_DIR/"
 
 echo "==> Installing into ZeroClaw..."
